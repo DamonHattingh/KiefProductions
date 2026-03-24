@@ -1,0 +1,73 @@
+@model KiefProductions.Models.Gear
+@{ ViewData["Title"] = "Add Gear"; }
+
+<div class="breadcrumb">
+    <a href="/Gear">Own Gear</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">Add Gear</span>
+</div>
+
+<div style="max-width:640px;">
+    <div class="card">
+        <div class="card-header"><h2>Add Own Gear</h2></div>
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Category <span class="required">*</span></label>
+                        <select id="categorySelect" class="form-select" onchange="loadTypes(this.value)">
+                            <option value="">Select Category</option>
+                            @foreach (var cat in ViewBag.Categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Product Type <span class="required">*</span></label>
+                        <select asp-for="ProductTypeId" id="typeSelect" class="form-select">
+                            <option value="">Select Type</option>
+                        </select>
+                        <span asp-validation-for="ProductTypeId" class="form-error"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gear Name <span class="required">*</span></label>
+                    <input asp-for="Name" class="form-control" placeholder="e.g. Yamaha QL5 Mixing Desk" />
+                    <span asp-validation-for="Name" class="form-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea asp-for="Description" class="form-control" placeholder="Brief description of the item" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Market Price (R)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R</span>
+                        <input asp-for="MarketPrice" type="number" class="form-control currency-input" step="0.01" min="0" placeholder="0.00" />
+                    </div>
+                    <span class="form-hint">The price shown to clients on quotes</span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Save Gear</button>
+                <a href="/Gear" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function loadTypes(categoryId) {
+            const select = document.getElementById('typeSelect');
+            select.innerHTML = '<option value="">Loading...</option>';
+            if (!categoryId) { select.innerHTML = '<option value="">Select Type</option>'; return; }
+            const res = await fetch(`/Gear/GetProductTypes?categoryId=${categoryId}`);
+            const types = await res.json();
+            select.innerHTML = '<option value="">Select Type</option>' +
+                types.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        }
+    </script>
+}

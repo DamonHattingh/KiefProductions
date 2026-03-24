@@ -1,0 +1,248 @@
+@model IEnumerable<KiefProductions.Models.Event>
+@{
+    ViewData["Title"] = "Events";
+}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Events</h1>
+        <p>@Model.Count() event@(Model.Count() == 1 ? "" : "s")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-ghost btn-sm" onclick="toggleView('calendar')" id="btnCalendar">📅 Calendar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleView('list')" id="btnList">☰ List</button>
+        <a href="/Events/Create" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            New Event
+        </a>
+    </div>
+</div>
+
+<!-- Calendar View -->
+<div id="calendarView" class="card" style="display:none;">
+    <div class="card-body">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- List View -->
+<div id="listView">
+    @if (!Model.Any())
+    {
+        <div class="card">
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                <h3>No events yet</h3>
+                <p>Events are created automatically with quotes, or manually here</p>
+                <a href="/Events/Create" class="btn btn-primary">Create Event</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Date</th>
+                        <th>Venue</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ev in Model)
+                    {
+                        <tr data-event-id="@ev.Id" data-event-name="@ev.EventName" data-has-quote="@(ev.QuoteId.HasValue ? "true" : "false")">
+                            <td>
+                                <a href="/Events/Details/@ev.Id" style="color:var(--text-primary);text-decoration:none;font-weight:500;">@ev.EventName</a>
+                            </td>
+                            <td class="muted">@ev.EventDate.ToString("dd MMM yyyy")</td>
+                            <td class="muted">@(ev.Venue ?? "—")</td>
+                            <td class="muted">@(ev.Quote?.Client?.FullName ?? "—")</td>
+                            <td><span class="badge badge-@ev.Status.ToString().ToLower()">@ev.Status</span></td>
+                            <td>
+                                <div class="table-actions">
+                                    <a href="/Events/Details/@ev.Id" class="btn btn-ghost btn-sm" data-tooltip="View">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                    </a>
+                                    <a href="/Events/Edit/@ev.Id" class="btn btn-ghost btn-sm" data-tooltip="Edit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                    </a>
+                                    <button type="button" class="btn btn-danger btn-sm delete-event" data-event-id="@ev.Id" data-event-name="@ev.EventName" data-has-quote="@(ev.QuoteId.HasValue ? "true" : "false")" data-tooltip="Delete">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+    <style>
+        .fc {
+            --fc-border-color: var(--border);
+            --fc-page-bg-color: transparent;
+            --fc-neutral-bg-color: var(--bg-elevated);
+            --fc-list-event-hover-bg-color: var(--bg-hover);
+            --fc-today-bg-color: var(--orange-subtle);
+        }
+
+            .fc .fc-toolbar-title {
+                font-family: 'Outfit', sans-serif;
+                font-size: 16px;
+                font-weight: 600;
+                color: var(--text-primary);
+            }
+
+            .fc .fc-button {
+                background: var(--bg-elevated);
+                border-color: var(--border-strong);
+                color: var(--text-secondary);
+                font-size: 12px;
+            }
+
+                .fc .fc-button:hover {
+                    background: var(--bg-hover);
+                    color: var(--text-primary);
+                }
+
+            .fc .fc-button-primary:not(:disabled).fc-button-active {
+                background: var(--orange);
+                border-color: var(--orange);
+                color: #000;
+            }
+
+            .fc .fc-col-header-cell-cushion {
+                color: var(--text-muted);
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .fc .fc-daygrid-day-number {
+                color: var(--text-secondary);
+                font-size: 12px;
+            }
+
+            .fc .fc-event {
+                border-radius: 4px;
+                font-size: 11.5px;
+                font-weight: 500;
+                border: none;
+                padding: 1px 4px;
+            }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let currentView = 'list';
+
+        function toggleView(view) {
+            currentView = view;
+            document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+            document.getElementById('listView').style.display = view === 'list' ? 'block' : 'none';
+            document.getElementById('btnCalendar').className = 'btn btn-sm ' + (view === 'calendar' ? 'btn-primary' : 'btn-ghost');
+            document.getElementById('btnList').className = 'btn btn-sm ' + (view === 'list' ? 'btn-primary' : 'btn-ghost');
+            if (view === 'calendar') initCalendar();
+        }
+
+        let calendarInitialized = false;
+        function initCalendar() {
+            if (calendarInitialized) return;
+            calendarInitialized = true;
+            const el = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(el, {
+                initialView: 'dayGridMonth',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
+                events: '/Events/GetCalendarEvents',
+                eventClick: (info) => { if (info.event.url) { info.jsEvent.preventDefault(); window.location.href = info.event.url; } },
+                height: 'auto'
+            });
+            calendar.render();
+        }
+
+        // Handle Event Deletion
+        document.addEventListener('DOMContentLoaded', function() {
+            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const deleteButtons = document.querySelectorAll('.delete-event');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+
+                    const eventId = this.getAttribute('data-event-id');
+                    const eventName = this.getAttribute('data-event-name');
+                    const hasQuote = this.getAttribute('data-has-quote') === 'true';
+
+                    if (hasQuote) {
+                        await Swal.fire({
+                            title: 'Cannot Delete Event',
+                            html: `Event <strong>${eventName}</strong> is linked to a quote.<br><br>Please delete the quote first or unlink it from the event.`,
+                            icon: 'warning',
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: 'OK',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#ff6b6b'
+                        });
+                        return;
+                    }
+
+                    const result = await Swal.fire({
+                        title: 'Delete Event?',
+                        html: `Are you sure you want to delete event <strong>${eventName}</strong>?<br><br>This action cannot be undone.`,
+                        icon: 'warning',
+                        background: '#16181c',
+                        color: '#e0e0e0',
+                        iconColor: '#ff6b6b',
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel',
+                        showCancelButton: true
+                    });
+
+                    if (result.isConfirmed) {
+                        await Swal.fire({
+                            title: 'Deleted!',
+                            text: `Event ${eventName} has been deleted.`,
+                            icon: 'success',
+                            confirmButtonColor: '#4caf50',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#4caf50',
+                            timer: 1500,
+                            showConfirmButton: true
+                        });
+
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/Events/Delete/${eventId}`;
+                        form.style.display = 'none';
+
+                        const token = document.createElement('input');
+                        token.type = 'hidden';
+                        token.name = '__RequestVerificationToken';
+                        token.value = antiForgeryToken;
+
+                        form.appendChild(token);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

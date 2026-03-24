@@ -1,0 +1,251 @@
+@model KiefProductions.Models.Invoice
+@{
+    ViewData["Title"] = Model.InvoiceNumber ?? "Invoice";
+}
+
+<div class="breadcrumb">
+    <a href="/Invoices">Invoices</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+    <span class="current">@Model.InvoiceNumber</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>@Model.InvoiceNumber</h1>
+        <p>@Model.Client.FullName · Issued @Model.DateIssued.ToString("dd MMM yyyy")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Invoices/GeneratePdf/@Model.Id" class="btn btn-ghost" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+            PDF
+        </a>
+        <a href="/Invoices/GeneratePdf/@Model.Id" class="btn btn-secondary" target="_blank">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+            Export PDF
+        </a>
+        <select class="form-select" style="width:160px;" onchange="updateStatus(this.value)">
+            @foreach (var statusOption in Enum.GetValues<KiefProductions.Models.InvoiceStatus>())
+            {
+                <option value="@statusOption" selected="@(Model.Status == statusOption)">@statusOption</option>
+            }
+        </select>
+        @if (Model.BalanceDue > 0)
+        {
+            <button class="btn btn-primary" data-modal-open="paymentModal">Record Payment</button>
+        }
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <!-- Header card -->
+        <div class="card mb-3">
+            <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+                <div>
+                    <div class="detail-row"><span class="detail-label">Client</span><span class="detail-value">@Model.Client.FullName</span></div>
+                    <div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">@Model.Client.Email</span></div>
+                    <div class="detail-row"><span class="detail-label">Phone</span><span class="detail-value">@(Model.Client.Phone ?? "—")</span></div>
+                    @if (!string.IsNullOrEmpty(Model.Client.BusinessName))
+                    {
+                        <div class="detail-row"><span class="detail-label">Business</span><span class="detail-value">@Model.Client.BusinessName</span></div>
+                    }
+                </div>
+                <div>
+                    <div class="detail-row"><span class="detail-label">Invoice #</span><span class="detail-value" style="font-family:'Outfit',sans-serif;font-weight:600;">@Model.InvoiceNumber</span></div>
+                    <div class="detail-row"><span class="detail-label">Date Issued</span><span class="detail-value">@Model.DateIssued.ToString("dd MMM yyyy")</span></div>
+                    <div class="detail-row"><span class="detail-label">Due Date</span><span class="detail-value" style="color:@(Model.DueDate < DateTime.Now && Model.Status != KiefProductions.Models.InvoiceStatus.Paid ? "var(--red)" : "")">@Model.DueDate.ToString("dd MMM yyyy")</span></div>
+                    <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-@Model.Status.ToString().ToLower()">@Model.Status</span></span></div>
+                    @if (Model.Quote != null)
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">Quote</span>
+                            <span class="detail-value"><a href="/Quotes/Details/@Model.Quote.Id" style="color:var(--orange);">@Model.Quote.QuoteNumber</a></span>
+                        </div>
+                    }
+                    @if (Model.Quote?.Event != null)
+                    {
+                        <div class="detail-row">
+                            <span class="detail-label">Event</span>
+                            <span class="detail-value">@Model.Quote.Event.EventName — @Model.Quote.Event.EventDate.ToString("dd MMM yyyy")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Line Items</h3></div>
+            @{
+                var grouped = Model.LineItems
+                .Where(li => li.ItemType != KiefProductions.Models.LineItemType.Expense)
+                .GroupBy(li => li.Category?.Name ?? "Uncategorized");
+            }
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Item</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var group in grouped)
+                    {
+                        <tr>
+                            <td colspan="6" style="background:var(--bg-elevated);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);padding:8px 16px;">
+                                @group.Key
+                            </td>
+                        </tr>
+                        @foreach (var item in group)
+                        {
+                            <tr>
+                                <td class="muted">@item.ProductType?.Name</td>
+                                <td style="font-weight:500;">@item.ProductName</td>
+                                <td class="muted">@item.ProductDescription</td>
+                                <td>R @item.UnitPrice.ToString("N2")</td>
+                                <td>@item.Quantity</td>
+                                <td style="font-family:'Outfit',sans-serif;font-weight:600;">R @((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Payment History -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Payment History (@Model.Payments.Count)</h3>
+                @if (Model.BalanceDue > 0)
+                {
+                    <button class="btn btn-primary btn-sm" data-modal-open="paymentModal">+ Record Payment</button>
+                }
+            </div>
+            @if (Model.Payments.Any())
+            {
+                <table class="table">
+                    <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Notes</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var p in Model.Payments.OrderByDescending(p => p.PaymentDate))
+                        {
+                            <tr>
+                                <td class="muted">@p.PaymentDate.ToString("dd MMM yyyy")</td>
+                                <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--green);">R @p.Amount.ToString("N2")</td>
+                                <td class="muted">@(p.Method ?? "—")</td>
+                                <td class="muted">@(p.Notes ?? "—")</td>
+                                <td>
+                                    <form asp-action="DeletePayment" asp-route-paymentId="@p.Id" asp-route-invoiceId="@Model.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-sm" data-confirm="Remove this payment?">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:24px;"><p>No payments recorded yet</p></div>
+            }
+        </div>
+    </div>
+
+    <!-- Summary sidebar -->
+    <div>
+        <div class="finance-summary">
+            <div class="finance-row">
+                <span class="label">Subtotal</span>
+                <span class="value">R @Model.Subtotal.ToString("N2")</span>
+            </div>
+            @if (Model.Discount > 0)
+            {
+                <div class="finance-row">
+                    <span class="label">Discount</span>
+                    <span class="value" style="color:var(--red);">−R @Model.Discount.ToString("N2")</span>
+                </div>
+            }
+            <div class="finance-row total-row">
+                <span class="label">Total</span>
+                <span class="value">R @Model.Total.ToString("N2")</span>
+            </div>
+            <div class="finance-row">
+                <span class="label">Amount Paid</span>
+                <span class="value" style="color:var(--green);">R @Model.AmountPaid.ToString("N2")</span>
+            </div>
+            <div class="finance-row total-row">
+                <span class="label">Balance Due</span>
+                <span class="value" style="color:@(Model.BalanceDue > 0 ? "var(--red)" : "var(--green)");">R @Model.BalanceDue.ToString("N2")</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record Payment Modal -->
+<div class="modal-backdrop" id="paymentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Record Payment</h3>
+            <button class="btn-close" data-modal-close>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+        </div>
+        <form asp-action="RecordPayment" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="invoiceId" value="@Model.Id" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Amount (R) <span class="required">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">R</span>
+                        <input type="number" name="amount" class="form-control currency-input" step="0.01" min="0.01"
+                               max="@Model.BalanceDue" value="@Model.BalanceDue.ToString("0.00")" />
+                    </div>
+                    <span class="form-hint">Balance due: R @Model.BalanceDue.ToString("N2")</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Payment Date</label>
+                        <input type="date" name="paymentDate" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Method</label>
+                        <select name="method" class="form-select">
+                            <option value="">Select method</option>
+                            <option value="EFT">EFT</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Card">Card</option>
+                            <option value="Deposit">Deposit</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <input type="text" name="notes" class="form-control" placeholder="Optional reference or note" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Record Payment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateStatus(status) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Invoices/UpdateStatus';
+            form.innerHTML = `<input name="id" value="@Model.Id" /><input name="status" value="${status}" /><input name="__RequestVerificationToken" value="${document.querySelector('[name=__RequestVerificationToken]')?.value ?? ''}" />`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+}

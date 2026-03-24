@@ -1,0 +1,61 @@
+@using KiefProductions.Controllers
+@model CreateUserViewModel
+@{ ViewData["Title"] = "New User"; }
+
+<div class="breadcrumb">
+    <a href="/Users">Users</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">New User</span>
+</div>
+
+<div style="max-width:520px;">
+    <div class="card">
+        <div class="card-header"><h2>Create System User</h2></div>
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div class="form-group">
+                    <label class="form-label">Email Address <span class="required">*</span></label>
+                    <input asp-for="Email" type="email" class="form-control" placeholder="user@kiefproductions.co.za" />
+                    <span asp-validation-for="Email" class="form-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password <span class="required">*</span></label>
+                    <input asp-for="Password" type="password" class="form-control" placeholder="Min 8 chars, 1 uppercase, 1 digit" />
+                    <span asp-validation-for="Password" class="form-error"></span>
+                    <span class="form-hint">Minimum 8 characters, at least 1 uppercase letter and 1 digit</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Role</label>
+                    <select asp-for="Role" class="form-select">
+                        <option value="Admin">Admin — full access</option>
+                        <option value="Staff" selected>Staff — standard access</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Create User</button>
+                <a href="/Users" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card mt-3" style="margin-top:16px;">
+        <div class="card-body">
+            <div style="font-size:13px;color:var(--text-secondary);">
+                <strong style="color:var(--text-primary);">Role permissions:</strong>
+                <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <span class="badge badge-approved">Admin</span>
+                        <span>Full access — can manage users, view all data, create/edit/delete everything</span>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:flex-start;">
+                        <span class="badge badge-sent">Staff</span>
+                        <span>Standard access — can create quotes, manage clients and events</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

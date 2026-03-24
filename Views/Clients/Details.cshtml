@@ -1,0 +1,159 @@
+@model KiefProductions.Models.Client
+@{ ViewData["Title"] = Model.FullName; }
+
+<div class="breadcrumb">
+    <a href="/Clients">Clients</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">@Model.FullName</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>@Model.FullName</h1>
+        <p>@Model.Email</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Clients/Edit/@Model.Id" class="btn btn-secondary">Edit</a>
+        <a href="/Quotes/Create?clientId=@Model.Id" class="btn btn-primary">New Quote</a>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card mb-3">
+            <div class="card-header"><h3>Contact Information</h3></div>
+            <div class="card-body">
+                <div class="detail-row">
+                    <span class="detail-label">Full Name</span>
+                    <span class="detail-value">@Model.FullName</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">@Model.Email</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Phone</span>
+                    <span class="detail-value">@(Model.Phone ?? "—")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Business</span>
+                    <span class="detail-value">@(Model.BusinessName ?? "—")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Address</span>
+                    <span class="detail-value">@(Model.Address ?? "—")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">
+                        <span class="badge @(Model.IsActive ? "badge-active" : "badge-inactive")">
+                            @(Model.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Client Since</span>
+                    <span class="detail-value">@Model.CreatedDate.ToString("dd MMMM yyyy")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quotes -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3>Quotes (@Model.Quotes.Count)</h3>
+                <a href="/Quotes/Create?clientId=@Model.Id" class="btn btn-primary btn-sm">New Quote</a>
+            </div>
+            @if (Model.Quotes.Any())
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Quote #</th>
+                            <th>Event</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var q in Model.Quotes.OrderByDescending(q => q.DateIssued))
+                        {
+                            <tr>
+                                <td><a href="/Quotes/Details/@q.Id" style="color:var(--orange);text-decoration:none;">@q.QuoteNumber</a></td>
+                                <td class="muted">@(q.Event?.EventName ?? "—")</td>
+                                <td><span class="badge badge-@q.Status.ToString().ToLower()">@q.Status</span></td>
+                                <td style="font-family:'Outfit',sans-serif;font-weight:600;">R @q.Total.ToString("N2")</td>
+                                <td class="muted">@q.DateIssued.ToString("dd MMM yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:24px;"><p>No quotes for this client</p></div>
+            }
+        </div>
+
+        <!-- Invoices -->
+        <div class="card">
+            <div class="card-header"><h3>Invoices (@Model.Invoices.Count)</h3></div>
+            @if (Model.Invoices.Any())
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Status</th>
+                            <th>Total</th>
+                            <th>Balance Due</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in Model.Invoices.OrderByDescending(i => i.DateIssued))
+                        {
+                            <tr>
+                                <td><a href="/Invoices/Details/@inv.Id" style="color:var(--orange);text-decoration:none;">@inv.InvoiceNumber</a></td>
+                                <td><span class="badge badge-@inv.Status.ToString().ToLower()">@inv.Status</span></td>
+                                <td style="font-family:'Outfit',sans-serif;font-weight:600;">R @inv.Total.ToString("N2")</td>
+                                <td style="font-family:'Outfit',sans-serif;color:@(inv.BalanceDue > 0 ? "var(--red)" : "var(--green)");">R @inv.BalanceDue.ToString("N2")</td>
+                                <td class="muted">@inv.DateIssued.ToString("dd MMM yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:24px;"><p>No invoices for this client</p></div>
+            }
+        </div>
+    </div>
+
+    <!-- Side stats -->
+    <div>
+        <div class="card">
+            <div class="card-header"><h3>Summary</h3></div>
+            <div class="card-body">
+                <div class="finance-row">
+                    <span class="label">Total Quoted</span>
+                    <span class="value">R @Model.Quotes.Sum(q => q.Total).ToString("N2")</span>
+                </div>
+                <div class="finance-row">
+                    <span class="label">Total Invoiced</span>
+                    <span class="value">R @Model.Invoices.Sum(i => i.Total).ToString("N2")</span>
+                </div>
+                <div class="finance-row">
+                    <span class="label">Total Paid</span>
+                    <span class="value" style="color:var(--green);">R @Model.Invoices.Sum(i => i.AmountPaid).ToString("N2")</span>
+                </div>
+                <div class="finance-row total-row">
+                    <span class="label">Outstanding</span>
+                    <span class="value">R @Model.Invoices.Sum(i => i.BalanceDue).ToString("N2")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

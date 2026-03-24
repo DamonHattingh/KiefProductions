@@ -1,0 +1,115 @@
+@model IEnumerable<UserViewModel>
+@using KiefProductions.Controllers
+@{ ViewData["Title"] = "User Management"; }
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>User Management</h1>
+        <p>@Model.Count() system account@(Model.Count() == 1 ? "" : "s")</p>
+    </div>
+    <a href="/Users/Create" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New User
+    </a>
+</div>
+
+<div class="table-wrapper">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Roles</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td style="font-weight:500;">@user.Email</td>
+                    <td>
+                        @foreach (var role in user.Roles)
+                        {
+                            <span class="badge @(role == "Admin" ? "badge-approved" : "badge-sent")" style="margin-right:4px;">@role</span>
+                        }
+                        @if (!user.Roles.Any())
+                        {
+                            <span class="badge badge-draft">No Role</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="badge @(user.IsLockedOut ? "badge-inactive" : "badge-active")">
+                            @(user.IsLockedOut ? "Inactive" : "Active")
+                        </span>
+                    </td>
+                    <td>
+                        <div class="table-actions">
+                            <a href="/Users/Edit/@user.Id" class="btn btn-ghost btn-sm" data-tooltip="Edit">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </a>
+
+                            <!-- Reset Password -->
+                            <button class="btn btn-ghost btn-sm" data-tooltip="Reset Password"
+                                    data-modal-open="resetModal-@user.Id">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            </button>
+
+                            <!-- Lock/Unlock -->
+                            <form asp-action="ToggleLockout" asp-route-id="@user.Id" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit"
+                                        class="btn @(user.IsLockedOut ? "btn-success" : "btn-danger") btn-sm"
+                                        data-confirm="@(user.IsLockedOut ? "Reactivate this user?" : "Deactivate this user?")"
+                                        data-tooltip="@(user.IsLockedOut ? "Reactivate" : "Deactivate")">
+                                    @if (user.IsLockedOut)
+                                    {
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+                                    }
+                                    else
+                                    {
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                    }
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Reset Password Modal per user -->
+                <tr style="display:none;">
+                    <td colspan="4">
+                        <div class="modal-backdrop" id="resetModal-@user.Id">
+                            <div class="modal">
+                                <div class="modal-header">
+                                    <h3>Reset Password</h3>
+                                    <button class="btn-close" data-modal-close>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </div>
+                                <form asp-action="ResetPassword" asp-route-id="@user.Id" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <div class="modal-body">
+                                        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+                                            Reset password for <strong>@user.Email</strong>
+                                        </p>
+                                        <div class="form-group">
+                                            <label class="form-label">New Password <span class="required">*</span></label>
+                                            <input type="password" name="newPassword" class="form-control"
+                                                   placeholder="Min 8 chars, 1 uppercase, 1 digit" required />
+                                            <span class="form-hint">Min 8 characters, 1 uppercase letter, 1 digit</span>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Reset Password</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

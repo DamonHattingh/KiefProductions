@@ -1,0 +1,250 @@
+@model IEnumerable<KiefProductions.Models.Category>
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Categories</h1>
+        <p>Gear hierarchy: Category → Type → Item</p>
+    </div>
+    <a href="/Categories/Create" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+        New Category
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /></svg>
+            <h3>No categories yet</h3>
+            <p>Create categories like Sound, Lighting, Video</p>
+            <a href="/Categories/Create" class="btn btn-primary">Add Category</a>
+        </div>
+    </div>
+}
+else
+{
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        @foreach (var cat in Model)
+        {
+            <div class="card" data-category-id="@cat.Id" data-category-name="@cat.Name">
+                <div class="card-header">
+                    <div class="d-flex align-center gap-3">
+                        <span style="font-family:'Outfit',sans-serif;font-size:15px;font-weight:600;color:var(--orange);">@cat.Name</span>
+                        <span style="font-size:12px;color:var(--text-muted);">@cat.ProductTypes.Count type@(cat.ProductTypes.Count == 1 ? "" : "s")</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/Categories/Edit/@cat.Id" class="btn btn-ghost btn-sm">Edit</a>
+                        <a href="/Categories/AddProductType/@cat.Id" class="btn btn-secondary btn-sm">Add Type</a>
+                        <button type="button" class="btn btn-danger btn-sm delete-category" data-category-id="@cat.Id" data-category-name="@cat.Name">Delete</button>
+                    </div>
+                </div>
+                @if (cat.ProductTypes.Any())
+                {
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Type Name</th>
+                                <th>Own Gear</th>
+                                <th>Rental Gear</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pt in cat.ProductTypes)
+                            {
+                                <tr data-product-type-id="@pt.Id" data-product-type-name="@pt.Name" data-category-id="@cat.Id">
+                                    <td style="font-weight:500;">@pt.Name</td>
+                                    <td class="muted">@pt.Gears.Count item@(pt.Gears.Count == 1 ? "" : "s")</td>
+                                    <td class="muted">@pt.RentalGears.Count item@(pt.RentalGears.Count == 1 ? "" : "s")</td>
+                                    <td style="display: flex; justify-content: center;">
+                                        <div class="table-actions">
+                                            <a href="/Categories/EditProductType/@pt.Id" class="btn btn-ghost btn-sm" data-tooltip="Edit">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                            </a>
+                                            <button type="button" class="btn btn-danger btn-sm delete-product-type" data-product-type-id="@pt.Id" data-product-type-name="@pt.Name" data-category-id="@cat.Id" data-category-name="@cat.Name">Remove</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div style="padding:14px 22px;color:var(--text-muted);font-size:13px;">No types added yet — <a href="/Categories/AddProductType/@cat.Id" style="color:var(--text-primary);">add one</a></div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get anti-forgery token
+            const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            // Handle Category Deletion
+            const categoryDeleteButtons = document.querySelectorAll('.delete-category');
+            categoryDeleteButtons.forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+
+                    const categoryId = this.getAttribute('data-category-id');
+                    const categoryName = this.getAttribute('data-category-name');
+
+                    // Check if category has product types
+                    const card = this.closest('.card');
+                    const hasProductTypes = card.querySelector('table') !== null;
+
+                    if (hasProductTypes) {
+                        await Swal.fire({
+                            title: 'Cannot Delete Category',
+                            html: `Category <strong>${categoryName}</strong> has product types associated with it.<br><br>Please delete all product types first before deleting the category.`,
+                            icon: 'warning',
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: 'OK',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#ff6b6b'
+                        });
+                        return;
+                    }
+
+                    const result = await Swal.fire({
+                        title: 'Delete Category?',
+                        html: `Are you sure you want to delete category <strong>${categoryName}</strong>?<br><br>This action cannot be undone.`,
+                        icon: 'warning',
+                        background: '#16181c',
+                        color: '#e0e0e0',
+                        iconColor: '#ff6b6b',
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel',
+                        showCancelButton: true
+                    });
+
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/Categories/Delete/${categoryId}`;
+                        form.style.display = 'none';
+
+                        const token = document.createElement('input');
+                        token.type = 'hidden';
+                        token.name = '__RequestVerificationToken';
+                        token.value = antiForgeryToken;
+
+                        form.appendChild(token);
+                        document.body.appendChild(form);
+
+                        await Swal.fire({
+                            title: 'Deleted!',
+                            text: `Category ${categoryName} has been deleted.`,
+                            icon: 'success',
+                            confirmButtonColor: '#4caf50',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#4caf50',
+                            timer: 1500,
+                            showConfirmButton: true
+                        });
+
+                        form.submit();
+                    }
+                });
+            });
+
+            // Handle Product Type Deletion
+            const productTypeDeleteButtons = document.querySelectorAll('.delete-product-type');
+            productTypeDeleteButtons.forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+
+                    const productTypeId = this.getAttribute('data-product-type-id');
+                    const productTypeName = this.getAttribute('data-product-type-name');
+                    const categoryId = this.getAttribute('data-category-id');
+                    const categoryName = this.getAttribute('data-category-name');
+
+                    // Check if product type has gears or rental gears
+                    const row = this.closest('tr');
+                    const gearCell = row.cells[1];
+                    const rentalCell = row.cells[2];
+
+                    const gearText = gearCell.innerText;
+                    const rentalText = rentalCell.innerText;
+
+                    const hasGears = gearText !== '0 items' && gearText !== '0 item';
+                    const hasRentalGears = rentalText !== '0 items' && rentalText !== '0 item';
+
+                    if (hasGears || hasRentalGears) {
+                        let items = [];
+                        if (hasGears) items.push(gearText);
+                        if (hasRentalGears) items.push(rentalText);
+
+                        await Swal.fire({
+                            title: 'Cannot Delete Product Type',
+                            html: `Product type <strong>${productTypeName}</strong> in category <strong>${categoryName}</strong> has associated items:<br><br>${items.join('<br>')}<br><br>Please delete all items first before deleting this product type.`,
+                            icon: 'warning',
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: 'OK',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#ff6b6b'
+                        });
+                        return;
+                    }
+
+                    const result = await Swal.fire({
+                        title: 'Delete Product Type?',
+                        html: `Are you sure you want to delete product type <strong>${productTypeName}</strong> from category <strong>${categoryName}</strong>?<br><br>This action cannot be undone.`,
+                        icon: 'warning',
+                        background: '#16181c',
+                        color: '#e0e0e0',
+                        iconColor: '#ff6b6b',
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!',
+                        cancelButtonText: 'Cancel',
+                        showCancelButton: true
+                    });
+
+                    if (result.isConfirmed) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/Categories/DeleteProductType/${productTypeId}?categoryId=${categoryId}`;
+                        form.style.display = 'none';
+
+                        const token = document.createElement('input');
+                        token.type = 'hidden';
+                        token.name = '__RequestVerificationToken';
+                        token.value = antiForgeryToken;
+
+                        form.appendChild(token);
+                        document.body.appendChild(form);
+
+                        await Swal.fire({
+                            title: 'Deleted!',
+                            text: `Product type ${productTypeName} has been deleted.`,
+                            icon: 'success',
+                            confirmButtonColor: '#4caf50',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#4caf50',
+                            timer: 1500,
+                            showConfirmButton: true
+                        });
+
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
+}

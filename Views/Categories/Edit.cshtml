@@ -1,0 +1,27 @@
+@model KiefProductions.Models.Category
+@{ ViewData["Title"] = "Edit Category"; }
+<div class="breadcrumb">
+    <a href="/Categories">Categories</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">Edit @Model.Name</span>
+</div>
+<div style="max-width:480px;">
+    <div class="card">
+        <div class="card-header"><h2>Edit Category</h2></div>
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">Category Name <span class="required">*</span></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="form-error"></span>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <a href="/Categories" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

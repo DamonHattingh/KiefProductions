@@ -1,0 +1,535 @@
+@model KiefProductions.Models.Quote
+@{ ViewData["Title"] = "New Quote"; }
+
+<div class="breadcrumb">
+    <a href="/Quotes">Quotes</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">New Quote</span>
+</div>
+
+<form asp-action="Create" method="post" id="quoteForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="LineItemsJson" id="lineItemsJson" />
+    <input type="hidden" name="IsDraft" id="isDraftInput" value="false" />
+
+    <div x-data="quoteBuilder()" x-init="init()">
+
+        <!-- Top bar -->
+        <div class="d-flex align-center gap-2 mb-3">
+            <div style="flex:1;">
+                <select name="ClientId" class="form-select" style="max-width:300px;" required x-model="clientId">
+                    <option value="">Select Client <span class="required">*</span></option>
+                    @foreach (var c in ViewBag.Clients as IEnumerable<KiefProductions.Models.Client> ?? Enumerable.Empty<KiefProductions.Models.Client>())
+                    {
+                        <option value="@c.Id" selected="@(Model.ClientId == c.Id)">@c.FullName @(c.BusinessName != null ? $"({c.BusinessName})" : "")</option>
+                    }
+                </select>
+            </div>
+            <button type="button" class="btn btn-ghost" @@click="saveDraft()">Save Draft</button>
+            <button type="button" class="btn btn-primary" @@click="submitQuote()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                Save Quote
+            </button>
+        </div>
+
+        <div class="detail-grid">
+            <div>
+                <!-- Event Details -->
+                <div class="card mb-3">
+                    <div class="card-header"><h3>Event Details</h3></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Event Name</label>
+                                <input name="EventName" type="text" class="form-control" placeholder="e.g. Johnson Wedding" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Event Date</label>
+                                <input name="EventDate" type="date" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Venue</label>
+                                <input name="Venue" type="text" class="form-control" placeholder="Venue name" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Schedule</label>
+                                <div class="d-flex gap-2">
+                                    <input name="StartTime" type="time" class="form-control" />
+                                    <input name="EndTime" type="time" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Line Items Builder -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3>Line Items</h3>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-secondary btn-sm" @@click="addCategory()">+ Category</button>
+                            <button type="button" class="btn btn-secondary btn-sm" @@click="showPackageModal = true">+ Package</button>
+                        </div>
+                    </div>
+
+                    <!-- Line item header -->
+                    <div class="line-item-header">
+                        <span>Type</span>
+                        <span>Name</span>
+                        <span>Description</span>
+                        <span>Price</span>
+                        <span>Qty</span>
+                        <span>Cost</span>
+                        <span>Total</span>
+                        <span></span>
+                    </div>
+
+                    <!-- Categories -->
+                    <template x-for="(cat, catIdx) in categories" :key="catIdx">
+                        <div class="builder-section">
+                            <div class="builder-section-header">
+                                <div class="category-label">
+@*                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
+ *@                                    <select x-model="cat.categoryId" class="form-select" style="width:180px;background:transparent;border:1px solid var(--border-strong);color:var(--text-primary);font-weight:600;font-size:13px;">
+                                        <option value="">Select Category</option>
+                                        <template x-for="c in catalog.categories" :key="c.id">
+                                            <option :value="c.id" x-text="c.name"></option>
+                                        </template>
+                                    </select>
+                                    <span style="font-size:12px;color:var(--text-muted);" x-text="getCategoryName(cat.categoryId)"></span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-ghost btn-sm" @@click="addLineItem(catIdx, 'Gear')">+ Gear</button>
+                                    <button type="button" class="btn btn-ghost btn-sm" @@click="addLineItem(catIdx, 'Rental')">+ Rental</button>
+                                    <button type="button" class="btn btn-ghost btn-sm" @@click="addLineItem(catIdx, 'Custom')">+ Custom</button>
+                                    <button type="button" class="btn btn-danger btn-sm" @@click="addLineItem(catIdx, 'Expense')" style="background:var(--red-bg);color:var(--red);">+ Expense</button>
+                                    <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeCategory(catIdx)">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <template x-for="(item, itemIdx) in cat.items" :key="itemIdx">
+                                <div class="line-item-row" :class="{ 'expense-row': item.itemType === 'Expense', 'rental-row': item.itemType === 'Rental' }">
+                                    <!-- Type -->
+                                    <div>
+                                        <template x-if="item.itemType === 'Gear' || item.itemType === 'Rental'">
+                                            <select x-model="item.productTypeId" class="form-select form-select-sm" @@change="loadProducts(cat, item)">
+                                                <option value="">Type</option>
+                                                <template x-for="pt in getProductTypes(cat.categoryId, item.itemType)" :key="pt.id">
+                                                    <option :value="pt.id" x-text="pt.name"></option>
+                                                </template>
+                                            </select>
+                                        </template>
+                                        <template x-if="item.itemType === 'Custom'">
+                                            <select x-model="item.productTypeId"
+                                                    class="form-select form-select-sm"
+                                                    @@change="loadProducts(cat, item)">
+                                                <option value="">Type</option>
+                                                <template x-for="pt in getProductTypes(cat.categoryId, item.itemType)" :key="pt.id">
+                                                    <option :value="pt.id" x-text="pt.name"></option>
+                                                </template>
+                                            </select>
+                                        </template>
+                                        <template x-if="item.itemType === 'Expense'">
+                                            <span class="badge" style="background:var(--red-bg);color:var(--red);">Expense</span>
+                                        </template>
+                                    </div>
+                                    <!-- Name -->
+                                    <div>
+                                        <template x-if="item.itemType === 'Gear' || item.itemType === 'Rental'">
+                                            <select x-model="item.productName" class="form-select form-select-sm" @@change="fillFromProduct(cat, item)">
+                                                <option value="">Select item</option>
+                                                <template x-for="p in item.availableProducts" :key="p.name">
+                                                    <option :value="p.name" :data-desc="p.description" :data-price="p.marketPrice" :data-cost="p.ourCost" x-text="p.name"></option>
+                                                </template>
+                                            </select>
+                                        </template>
+                                        <template x-if="item.itemType === 'Custom' || item.itemType === 'Expense'">
+                                            <input type="text" x-model="item.productName" class="form-control form-control-sm" placeholder="Name" />
+                                        </template>
+                                    </div>
+                                    <!-- Description -->
+                                    <div>
+                                        <input type="text" x-model="item.productDescription" class="form-control form-control-sm" placeholder="Description" :readonly="item.itemType === 'Gear' || item.itemType === 'Rental'" />
+                                    </div>
+                                    <!-- Price -->
+                                    <div>
+                                        <input type="number" x-model.number="item.unitPrice" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00"
+                                               :readonly="item.itemType === 'Expense'"
+                                               :style="item.itemType === 'Expense' ? 'background:var(--bg-hover);' : ''"
+                                               @@input="recalc()" />
+                                    </div>
+                                    <!-- Qty -->
+                                    <div>
+                                        <input type="number" x-model.number="item.quantity" class="form-control form-control-sm" min="1" value="1" style="width:54px;" @@input="recalc()" />
+                                    </div>
+                                    <!-- Cost -->
+                                    <div>
+                                        <input type="number" x-model.number="item.costPrice" class="form-control form-control-sm" step="0.01" min="0" placeholder="0.00"
+                                               :readonly="item.itemType === 'Gear'"
+                                               :style="item.itemType === 'Gear' ? 'background:var(--bg-hover);' : ''"
+                                               @@input="recalc()" />
+                                    </div>
+                                    <!-- Total -->
+                                    <div class="row-total" x-text="'R ' + rowTotal(item).toFixed(2)"></div>
+                                    <!-- Remove -->
+                                    <div>
+                                        <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeItem(catIdx, itemIdx)">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div x-show="cat.items.length === 0" style="padding:12px 16px;color:var(--text-muted);font-size:13px;">
+                                No items — add gear, rental, custom or expense items above
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Package rows -->
+                    <template x-for="(pkg, pkgIdx) in packageItems" :key="pkgIdx">
+                        <div class="builder-section">
+                            <div class="builder-section-header">
+                                <div class="category-label" style="color:var(--purple);">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                                    Bundle
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removePackage(pkgIdx)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            </div>
+                            <div class="line-item-row">
+                                <div><span class="badge" style="background:var(--purple-bg);color:var(--purple);">Package</span></div>
+                                <div style="font-weight:500;" x-text="pkg.productName"></div>
+                                <div>
+                                    <template x-for="itm in pkg.packageContents" :key="itm">
+                                        <div style="font-size:12px;color:var(--text-muted);" x-text="itm"></div>
+                                    </template>
+                                </div>
+                                <div><input type="number" x-model.number="pkg.unitPrice" class="form-control form-control-sm" step="0.01" @@input="recalc()" /></div>
+                                <div><input type="number" x-model.number="pkg.quantity" class="form-control form-control-sm" min="1" style="width:54px;" @@input="recalc()" /></div>
+                                <div><input type="number" value="0" class="form-control form-control-sm" style="background:var(--bg-hover);" readonly /></div>
+                                <div class="row-total" x-text="'R ' + (pkg.unitPrice * pkg.quantity).toFixed(2)"></div>
+                                <div></div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="categories.length === 0 && packageItems.length === 0" style="padding:30px;text-align:center;color:var(--text-muted);font-size:13px;">
+                        No line items yet — add a category or package above
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <div class="finance-summary mb-3">
+                    <div class="finance-row">
+                        <span class="label">Subtotal</span>
+                        <span class="value" x-text="'R ' + subtotal.toFixed(2)"></span>
+                    </div>
+                    <div class="finance-row">
+                        <span class="label">Discount</span>
+                        <div class="input-group" style="width:120px;">
+                            <span class="input-group-text">R</span>
+                            <input type="number" name="Discount" x-model.number="discount" class="form-control form-control-sm" step="0.01" min="0" @@input="recalc()" />
+                        </div>
+                    </div>
+                    <div class="finance-row total-row">
+                        <span class="label">Total</span>
+                        <span class="value" x-text="'R ' + total.toFixed(2)"></span>
+                    </div>
+                </div>
+
+                <!-- Profit panel -->
+                <div class="card">
+                    <div class="card-header" style="cursor:pointer;" @@click="showProfit = !showProfit">
+                        <h3>Profit Analysis</h3>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="showProfit ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div x-show="showProfit" class="card-body" style="padding:0;">
+                        <div class="finance-row"><span class="label">Revenue</span><span class="value" x-text="'R ' + revenue.toFixed(2)"></span></div>
+                        <div class="finance-row"><span class="label">Costs</span><span class="value" style="color:var(--red);" x-text="'R ' + totalCost.toFixed(2)"></span></div>
+                        <div class="finance-row"><span class="label">Expenses</span><span class="value" style="color:var(--red);" x-text="'R ' + totalExpenses.toFixed(2)"></span></div>
+                        <div class="finance-row profit-row">
+                            <span class="label">Net Profit</span>
+                            <span class="value" :class="netProfit >= 0 ? 'positive' : 'negative'" x-text="'R ' + netProfit.toFixed(2)"></span>
+                        </div>
+                        <div class="finance-row">
+                            <span class="label">Margin</span>
+                            <span class="value" x-text="profitMargin.toFixed(1) + '%'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Package Modal -->
+        <div class="modal-backdrop" :class="{ open: showPackageModal }">
+            <div class="modal modal-lg">
+                <div class="modal-header">
+                    <h3>Select Package</h3>
+                    <button class="btn-close" @@click="showPackageModal = false">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;">
+                        <template x-for="pkg in catalog.packages" :key="pkg.id">
+                            <div class="card" style="cursor:pointer;border:1px solid var(--border);" @@click="addPackage(pkg); showPackageModal = false"
+                                 x-bind:style="'transition:all 0.2s;'">
+                                <div class="card-body" style="padding:14px;">
+                                    <div style="font-family:'Outfit',sans-serif;font-weight:600;font-size:14px;margin-bottom:8px;" x-text="pkg.name"></div>
+                                    <template x-for="item in pkg.items" :key="item.id">
+                                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:3px;">
+                                            <span style="color:var(--orange);" x-text="'×' + item.quantity + ' '"></span>
+                                            <span x-text="item.gearName || item.customDescription"></span>
+                                        </div>
+                                    </template>
+                                    <div style="font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:var(--orange);margin-top:10px;" x-text="'R ' + pkg.basePrice.toFixed(2)"></div>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="catalog.packages.length === 0" style="color:var(--text-muted);font-size:13px;grid-column:1/-1;text-align:center;padding:30px;">
+                            No active packages available
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+@section Styles {
+    <style>
+        .form-select-sm { padding: 5px 30px 5px 10px; font-size: 12.5px; }
+        .form-control-sm { padding: 5px 10px; font-size: 12.5px; }
+        .line-item-row .form-control, .line-item-row .form-select { min-width: 0; }
+        [x-cloak] { display: none !important; }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+        function quoteBuilder() {
+            return {
+                catalog: { categories: [], packages: [] },
+                categories: [],
+                packageItems: [],
+                clientId: '@Model.ClientId',
+                discount: 0,
+                subtotal: 0,
+                total: 0,
+                revenue: 0,
+                totalCost: 0,
+                totalExpenses: 0,
+                netProfit: 0,
+                profitMargin: 0,
+                showProfit: false,
+                showPackageModal: false,
+
+                async init() {
+                    const res = await fetch('/Quotes/GetCatalog');
+                    this.catalog = await res.json();
+                },
+
+                getCategoryName(id) {
+                    if (!id) return '';
+                    const cat = this.catalog.categories.find(c => c.id == id);
+                    return cat ? cat.name : '';
+                },
+
+                getProductTypes(categoryId, itemType) {
+                    if (!categoryId) return [];
+                    const cat = this.catalog.categories.find(c => c.id == categoryId);
+                    return cat ? cat.productTypes : [];
+                },
+
+                addCategory() {
+                    this.categories.push({ categoryId: '', items: [] });
+                },
+
+                removeCategory(idx) {
+                    this.categories.splice(idx, 1);
+                    this.recalc();
+                },
+
+                addLineItem(catIdx, type) {
+                    this.categories[catIdx].items.push({
+                        itemType: type,
+                        categoryId: this.categories[catIdx].categoryId,
+                        productTypeId: '',
+                        productName: '',
+                        productDescription: '',
+                        unitPrice: 0,
+                        costPrice: 0,
+                        quantity: 1,
+                        availableProducts: []
+                    });
+                },
+
+                removeItem(catIdx, itemIdx) {
+                    this.categories[catIdx].items.splice(itemIdx, 1);
+                    this.recalc();
+                },
+
+                        loadProducts(cat, item) {
+            item.productName = '';
+            item.productDescription = '';
+            item.unitPrice = 0;
+            item.costPrice = 0;
+            item.availableProducts = [];
+
+            const catData = this.catalog.categories.find(c => c.id == cat.categoryId);
+            if (!catData || !item.productTypeId) return;
+
+            const pt = catData.productTypes.find(t => t.id == item.productTypeId);
+            if (!pt) return;
+
+            if (item.itemType === 'Gear') {
+                item.availableProducts = pt.gears.map(g => ({
+                    name: g.name, description: g.description,
+                    marketPrice: g.marketPrice, ourCost: 0
+                }));
+            } else if (item.itemType === 'Rental') {
+                item.availableProducts = pt.rentalGears.map(rg => ({
+                    name: rg.name, description: rg.description,
+                    marketPrice: rg.marketPrice, ourCost: rg.ourCost
+                }));
+            } else if (item.itemType === 'Custom') {
+                // For custom items, you might want to load templates or leave empty
+                // Or you can load custom templates if you have them
+                item.availableProducts = pt.customTemplates?.map(ct => ({
+                    name: ct.name,
+                    description: ct.description,
+                    marketPrice: ct.price,
+                    ourCost: ct.cost
+                })) || [];
+            }
+        },
+
+                fillFromProduct(cat, item) {
+                    const p = item.availableProducts.find(x => x.name === item.productName);
+                    if (p) {
+                        item.productDescription = p.description || '';
+                        if (item.itemType === 'Gear') {
+                            item.unitPrice = p.marketPrice;
+                            item.costPrice = 0;
+                        } else {
+                            item.unitPrice = p.ourCost || p.marketPrice;
+                            item.costPrice = p.marketPrice;
+                        }
+                        this.recalc();
+                    }
+                },
+
+                addPackage(pkg) {
+                    this.packageItems.push({
+                        itemType: 'Package',
+                        packageId: pkg.id,
+                        productName: pkg.name,
+                        productDescription: `Package: ${pkg.name}`,
+                        unitPrice: pkg.basePrice,
+                        costPrice: 0,
+                        quantity: 1,
+                        packageContents: pkg.items.map(i => `×${i.quantity} ${i.gearName || i.customDescription}`)
+                    });
+                    this.recalc();
+                },
+
+                removePackage(idx) {
+                    this.packageItems.splice(idx, 1);
+                    this.recalc();
+                },
+
+                rowTotal(item) {
+                    if (item.itemType === 'Expense') return item.quantity * (item.costPrice || 0);
+                    return item.quantity * (item.unitPrice || 0);
+                },
+
+                recalc() {
+                    let sub = 0, rev = 0, costs = 0, expenses = 0;
+
+                    this.categories.forEach(cat => {
+                        cat.items.forEach(item => {
+                            item.categoryId = cat.categoryId;
+                            const t = this.rowTotal(item);
+                            sub += t;
+                            if (item.itemType === 'Expense') {
+                                expenses += t;
+                            } else {
+                                rev += t;
+                                costs += item.quantity * (item.costPrice || 0);
+                            }
+                        });
+                    });
+
+                    this.packageItems.forEach(pkg => {
+                        const t = pkg.quantity * pkg.unitPrice;
+                        sub += t;
+                        rev += t;
+                    });
+
+                    this.subtotal = sub;
+                    this.total = Math.max(sub - (this.discount || 0), 0);
+                    this.revenue = rev;
+                    this.totalCost = costs;
+                    this.totalExpenses = expenses;
+                    this.netProfit = rev - costs - expenses;
+                    this.profitMargin = rev > 0 ? (this.netProfit / rev * 100) : 0;
+                },
+
+                buildLineItems() {
+                    const items = [];
+                    this.categories.forEach(cat => {
+                        cat.items.forEach(item => {
+                            items.push({
+                                categoryId: parseInt(cat.categoryId) || 0,
+                                productTypeId: parseInt(item.productTypeId) || 0,
+                                packageId: 0,
+                                productName: item.productName,
+                                productDescription: item.productDescription,
+                                unitPrice: item.itemType === 'Expense' ? 0 : (item.unitPrice || 0),
+                                costPrice: item.itemType === 'Expense' ? (item.costPrice || 0) : (item.costPrice || 0),
+                                quantity: item.quantity || 1,
+                                itemType: item.itemType
+                            });
+                        });
+                    });
+                    this.packageItems.forEach(pkg => {
+                        items.push({
+                            categoryId: 0, productTypeId: 0,
+                            packageId: pkg.packageId,
+                            productName: pkg.productName,
+                            productDescription: pkg.productDescription,
+                            unitPrice: pkg.unitPrice || 0,
+                            costPrice: 0,
+                            quantity: pkg.quantity || 1,
+                            itemType: 'Package'
+                        });
+                    });
+                    return items;
+                },
+
+                saveDraft() {
+                    document.getElementById('lineItemsJson').value = JSON.stringify(this.buildLineItems());
+                    document.getElementById('isDraftInput').value = 'true';
+                    document.getElementById('quoteForm').submit();
+                },
+
+                submitQuote() {
+                    if (!this.clientId) { alert('Please select a client.'); return; }
+                    document.getElementById('lineItemsJson').value = JSON.stringify(this.buildLineItems());
+                    document.getElementById('isDraftInput').value = 'false';
+                    document.getElementById('quoteForm').submit();
+                }
+            };
+        }
+    </script>
+}

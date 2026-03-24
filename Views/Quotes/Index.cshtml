@@ -1,0 +1,186 @@
+@model IEnumerable<KiefProductions.Models.Quote>
+@{
+    ViewData["Title"] = "Quotes";
+}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Quotes</h1>
+        <p>@Model.Count() quote@(Model.Count() == 1 ? "" : "s")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form method="get" class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <input type="text" name="search" class="form-control" placeholder="Search quotes..." value="@ViewBag.Search" />
+        </form>
+        <a href="/Quotes/Create" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            New Quote
+        </a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+            <h3>No quotes yet</h3>
+            <p>Create your first quote to get started</p>
+            <a href="/Quotes/Create" class="btn btn-primary">Create Quote</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Quote #</th>
+                    <th>Client</th>
+                    <th>Event</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var q in Model)
+                {
+                    <tr data-quote-id="@q.Id" data-quote-number="@(q.QuoteNumber ?? "Draft")">
+                        <td>
+                            <a href="/Quotes/Details/@q.Id" style="color:var(--text-primary);text-decoration:none;font-weight:500;">
+                                @(q.QuoteNumber ?? "Draft")
+                            </a>
+                        </td>
+                        <td class="muted">@q.Client.FullName</td>
+                        <td class="muted">@(q.Event?.EventName ?? "—")</td>
+                        <td><span class="badge badge-@q.Status.ToString().ToLower()">@q.Status</span></td>
+                        <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--orange);">R @q.Total.ToString("N2")</td>
+                        <td class="muted">@q.DateIssued.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="/Quotes/Details/@q.Id" class="btn btn-ghost btn-sm" data-tooltip="View">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                </a>
+                                <form asp-action="Duplicate" asp-route-id="@q.Id" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-ghost btn-sm" data-tooltip="Duplicate">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-danger btn-sm delete-quote" data-quote-id="@q.Id" data-quote-number="@(q.QuoteNumber ?? "Draft")" data-tooltip="Delete">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteButtons = document.querySelectorAll('.delete-quote');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+
+                    const quoteId = this.getAttribute('data-quote-id');
+                    const quoteNumber = this.getAttribute('data-quote-number');
+
+                    // First, check if the quote can be deleted
+                    try {
+                        const response = await fetch(`/Quotes/CanDelete/${quoteId}`);
+                        const data = await response.json();
+
+                        if (!data.canDelete) {
+                            // Show warning if quote has dependencies
+                            await Swal.fire({
+                                title: 'Cannot Delete Quote',
+                                html: `Quote <strong>${quoteNumber}</strong> cannot be deleted because:<br><br>${data.reason}`,
+                                icon: 'warning',
+                                confirmButtonColor: '#d33',
+                                confirmButtonText: 'OK',
+                                background: '#16181c',
+                                color: '#e0e0e0',
+                                iconColor: '#ff6b6b'
+                            });
+                            return;
+                        }
+
+                        // If can delete, show confirmation dialog with dark theme
+                        const result = await Swal.fire({
+                            title: 'Delete Quote?',
+                            html: `Are you sure you want to delete quote <strong>${quoteNumber}</strong>?<br><br>This action cannot be undone.`,
+                            icon: 'warning',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#ff6b6b',
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Yes, delete it!',
+                            cancelButtonText: 'Cancel',
+                            showCancelButton: true,
+                            customClass: {
+                                popup: 'dark-swal',
+                                title: 'dark-swal-title',
+                                htmlContainer: 'dark-swal-content',
+                                confirmButton: 'dark-swal-confirm',
+                                cancelButton: 'dark-swal-cancel'
+                            }
+                        });
+
+                        if (result.isConfirmed) {
+                            // Show success message
+                            await Swal.fire({
+                                title: 'Deleted!',
+                                text: `Quote ${quoteNumber} has been deleted.`,
+                                icon: 'success',
+                                confirmButtonColor: '#4caf50',
+                                background: '#16181c',
+                                color: '#e0e0e0',
+                                iconColor: '#4caf50',
+                                timer: 1500,
+                                showConfirmButton: true
+                            });
+                            
+                            // Create and submit the delete form
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = `/Quotes/Delete/${quoteId}`;
+                            form.style.display = 'none';
+
+                            const antiForgeryToken = document.createElement('input');
+                            antiForgeryToken.type = 'hidden';
+                            antiForgeryToken.name = '__RequestVerificationToken';
+                            antiForgeryToken.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+                            form.appendChild(antiForgeryToken);
+                            document.body.appendChild(form);
+
+                            form.submit();
+                        }
+                    } catch (error) {
+                        console.error('Error checking delete eligibility:', error);
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'An error occurred while checking if the quote can be deleted.',
+                            icon: 'error',
+                            confirmButtonText: 'OK',
+                            background: '#16181c',
+                            color: '#e0e0e0',
+                            iconColor: '#f44336'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}

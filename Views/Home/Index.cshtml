@@ -1,0 +1,176 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="stats-grid">
+    <div class="stat-card" style="--accent-color: var(--orange);">
+        <div class="stat-icon" style="--icon-bg: var(--orange-subtle);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="stat-value">@ViewBag.TotalClients</div>
+        <div class="stat-label">Active Clients</div>
+    </div>
+
+    <div class="stat-card" style="--accent-color: var(--blue);">
+        <div class="stat-icon" style="--icon-bg: var(--blue-bg);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="stat-value">@ViewBag.TotalQuotes</div>
+        <div class="stat-label">Total Quotes</div>
+        @if (ViewBag.PendingQuotes > 0)
+        {
+            <div class="stat-change up">@ViewBag.PendingQuotes pending</div>
+        }
+    </div>
+
+    <div class="stat-card" style="--accent-color: var(--green);">
+        <div class="stat-icon" style="--icon-bg: var(--green-bg);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        </div>
+        <div class="stat-value">R @string.Format("{0:N0}", ViewBag.TotalRevenue)</div>
+        <div class="stat-label">Total Revenue (Paid)</div>
+    </div>
+
+    <div class="stat-card" style="--accent-color: @(ViewBag.OverdueInvoices > 0 ? "var(--red)" : "var(--yellow)");">
+        <div class="stat-icon" style="--icon-bg: var(--yellow-bg);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="stat-value">R @string.Format("{0:N0}", ViewBag.OutstandingBalance)</div>
+        <div class="stat-label">Outstanding Balance</div>
+        @if (ViewBag.OverdueInvoices > 0)
+        {
+            <div class="stat-change down">@ViewBag.OverdueInvoices overdue</div>
+        }
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Recent Quotes -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Quotes</h3>
+            <a href="/Quotes" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        @if (ViewBag.RecentQuotes != null && ((IEnumerable<dynamic>)ViewBag.RecentQuotes).Any())
+        {
+            <table class="table">
+                <tbody>
+                    @foreach (var q in ViewBag.RecentQuotes)
+                    {
+                        <tr>
+                            <td>
+                                <a href="/Quotes/Details/@q.Id" style="color:var(--text-primary);text-decoration:none;font-weight:500;">@q.QuoteNumber</a>
+                                <div style="font-size:12px;color:var(--text-muted);">@q.Client.FullName</div>
+                            </td>
+                            <td class="text-right">
+                                <span class="badge badge-@q.Status.ToString().ToLower()">@q.Status</span>
+                            </td>
+                            <td class="text-right" style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--orange);">
+                                R @q.Total.ToString("N2")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state" style="padding:30px;">
+                <p>No quotes yet</p>
+                <a href="/Quotes/Create" class="btn btn-primary btn-sm">Create first quote</a>
+            </div>
+        }
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Upcoming Events</h3>
+            <a href="/Events" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        @if (ViewBag.UpcomingEvents != null && ((IEnumerable<dynamic>)ViewBag.UpcomingEvents).Any())
+        {
+            <div class="card-body" style="padding:0;">
+                @foreach (var e in ViewBag.UpcomingEvents)
+                {
+                    <div class="activity-item" style="padding:14px 22px;">
+                        <div class="activity-dot" style="background:var(--orange);"></div>
+                        <div class="activity-content">
+                            <p><strong>@e.EventName</strong></p>
+                            <span>@e.EventDate.ToString("dd MMM yyyy") @(e.Venue != null ? $"· {e.Venue}" : "")</span>
+                        </div>
+                        <span class="badge badge-@e.Status.ToString().ToLower()">@e.Status</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state" style="padding:30px;">
+                <p>No upcoming events</p>
+                <a href="/Events/Create" class="btn btn-primary btn-sm">Add event</a>
+            </div>
+        }
+    </div>
+
+    <!-- Recent Invoices -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Invoices</h3>
+            <a href="/Invoices" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        @if (ViewBag.RecentInvoices != null && ((IEnumerable<dynamic>)ViewBag.RecentInvoices).Any())
+        {
+            <table class="table">
+                <tbody>
+                    @foreach (var inv in ViewBag.RecentInvoices)
+                    {
+                        <tr>
+                            <td>
+                                <a href="/Invoices/Details/@inv.Id" style="color:var(--text-primary);text-decoration:none;font-weight:500;">@inv.InvoiceNumber</a>
+                                <div style="font-size:12px;color:var(--text-muted);">@inv.Client.FullName</div>
+                            </td>
+                            <td class="text-right">
+                                <span class="badge badge-@inv.Status.ToString().ToLower()">@inv.Status</span>
+                            </td>
+                            <td class="text-right" style="font-family:'Outfit',sans-serif;font-weight:600;">
+                                R @inv.Total.ToString("N2")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="empty-state" style="padding:30px;">
+                <p>No invoices yet</p>
+            </div>
+        }
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Quick Actions</h3>
+        </div>
+        <div class="card-body" style="display:flex;flex-direction:column;gap:10px;">
+            <a href="/Quotes/Create" class="btn btn-primary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Quote
+            </a>
+            <a href="/Clients/Create" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Client
+            </a>
+            <a href="/Events/Create" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                New Event
+            </a>
+            <a href="/Gear/Create" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Gear
+            </a>
+        </div>
+    </div>
+</div>

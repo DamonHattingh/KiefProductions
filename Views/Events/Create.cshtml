@@ -1,0 +1,67 @@
+@model KiefProductions.Models.Event
+@{ ViewData["Title"] = "New Event"; }
+
+<div class="breadcrumb">
+    <a href="/Events">Events</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">New Event</span>
+</div>
+
+<div style="max-width:640px;">
+    <div class="card">
+        <div class="card-header"><h2>Event Details</h2></div>
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="form-label">Event Name <span class="required">*</span></label>
+                    <input asp-for="EventName" class="form-control" placeholder="e.g. Johnson Wedding, Vodacom Conference" />
+                    <span asp-validation-for="EventName" class="form-error"></span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Event Date <span class="required">*</span></label>
+                        <input asp-for="EventDate" type="date" class="form-control" />
+                        <span asp-validation-for="EventDate" class="form-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date</label>
+                        <input asp-for="EventEndDate" type="date" class="form-control" />
+                        <span class="form-hint">Leave blank for single-day events</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Venue</label>
+                    <input asp-for="Venue" class="form-control" placeholder="Venue name and location" />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Start Time</label>
+                        <input asp-for="StartTime" type="time" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Time</label>
+                        <input asp-for="EndTime" type="time" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Special instructions, logistics, notes..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" class="form-select">
+                        @foreach (var s in Enum.GetValues<KiefProductions.Models.EventStatus>())
+                        {
+                            <option value="@s">@s</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary">Save Event</button>
+                <a href="/Events" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

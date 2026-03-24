@@ -1,0 +1,370 @@
+﻿@model KiefProductions.Models.Invoice
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice - @Model.InvoiceNumber</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 10px;
+            color: #333;
+            margin: 0;
+            padding: 30px;
+            background-color: #fff;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .logo img {
+            max-height: 100px;
+        }
+
+        .quote-details {
+            text-align: left;
+            min-width: 140px;
+        }
+
+            .quote-details h1 {
+                margin: 0;
+                font-size: 28px;
+                color: black;
+                margin-bottom: 10px;
+                font-weight: bold;
+            }
+
+        .info-section {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 10px;
+        }
+
+        .client-info, .event-info {
+            flex: 1;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid black;
+        }
+
+        .info-row {
+            display: flex;
+            margin-bottom: 4px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        table {
+            width: 99.5%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            margin: 0 auto;
+        }
+
+        table, th, td {
+            box-sizing: border-box;
+        }
+
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        tr td:first-child:not(.category-header) {
+            border-left: 1px solid lightgray;
+        }
+
+        tr td:last-child:not(.category-header) {
+            border-right: 1px solid lightgray;
+        }
+
+        th {
+            font-weight: 600;
+            padding: 10px 8px;
+            text-align: left;
+        }
+
+        .category-header {
+            background-color: gray;
+            color: #fff;
+            font-weight: 700;
+            padding: 8px 8px;
+            border-bottom: 0px;
+            border-width: 0px 1px 0px 1px;
+            border-style: solid;
+            border-color: gray;
+        }
+
+        .summary {
+            width: 200px;
+            margin-left: auto;
+            margin-top: 30px;
+        }
+
+            .summary p {
+                display: flex;
+                justify-content: space-between;
+                font-weight: 600;
+                margin-top: 10px;
+            }
+
+            .summary .total {
+                font-size: 13px;
+                color: #393B42;
+                font-weight: 700;
+                border-top: 1px solid #393B42;
+                padding-top: 10px;
+            }
+
+            .summary .subtotals {
+                font-size: 12px;
+            }
+
+        .quote-terms {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #393B42;
+            border-radius: 6px;
+        }
+
+            .quote-terms h3 {
+                margin-top: 0;
+                color: #393B42;
+                font-size: 12px;
+                margin-bottom: 15px;
+            }
+
+            .quote-terms p {
+                font-size: 8px;
+                margin: 6px 0;
+                color: #666;
+            }
+
+        .negative {
+            color: #dc3545;
+        }
+
+        .positive {
+            color: #28a745;
+        }
+
+        .quote-info-row {
+            display: flex;
+            margin-bottom: 6px;
+            text-align: left;
+            justify-content: space-between;
+        }
+
+        .quote-label {
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        .package-items-list {
+            line-height: 1.4;
+        }
+
+        .package-item:not(:last-child) {
+            padding-bottom: 6px;
+        }
+
+        table td, table th {
+            vertical-align: top;
+        }
+
+        @@media print {
+            body {
+                padding: 0;
+            }
+
+            .summary .total {
+                border-top: 2px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="quote-details">
+            <h1>Invoice</h1>
+            <div class="quote-info-row">
+                <span class="quote-label">Invoice #:</span>
+                <span>@Model.InvoiceNumber</span>
+            </div>
+            <div class="quote-info-row">
+                <span class="quote-label">Date Issued:</span>
+                <span>@Model.DateIssued.ToString("yyyy/MM/dd")</span>
+            </div>
+            <div class="quote-info-row">
+                <span class="quote-label">Due Date:</span>
+                <span>@Model.DueDate.ToString("yyyy/MM/dd")</span>
+            </div>
+        </div>
+        <div class="logo">
+            @if (!string.IsNullOrEmpty(ViewBag.LogoBase64 as string))
+            {
+                <img src="@ViewBag.LogoBase64" alt="Kief Productions Logo" />
+            }
+        </div>
+    </div>
+
+    <!-- Client and Event Info -->
+    <div class="info-section">
+        <div class="client-info">
+            <h5 style="color:black;margin-bottom:10px;font-weight:550;font-size:17px;margin-top:0;">Client Information</h5>
+            <div class="info-row"><span class="info-label">Name:</span><span>@Model.Client?.FullName</span></div>
+            <div class="info-row"><span class="info-label">Email:</span><span>@Model.Client?.Email</span></div>
+            <div class="info-row"><span class="info-label">Phone:</span><span>@Model.Client?.Phone</span></div>
+            @if (!string.IsNullOrEmpty(Model.Client?.BusinessName))
+            {
+                <div class="info-row"><span class="info-label">Business:</span><span>@Model.Client.BusinessName</span></div>
+            }
+        </div>
+
+        @if (Model.Quote?.Event != null)
+        {
+            <div class="event-info">
+                <h5 style="color:black;margin-bottom:10px;font-weight:550;font-size:17px;margin-top:0;">Event Information</h5>
+                <div class="info-row"><span class="info-label">Name:</span><span>@Model.Quote.Event.EventName</span></div>
+                <div class="info-row"><span class="info-label">Date:</span><span>@Model.Quote.Event.EventDate.ToString("yyyy/MM/dd")</span></div>
+                <div class="info-row"><span class="info-label">Venue:</span><span>@(string.IsNullOrEmpty(Model.Quote.Event.Venue) ? "To Be Confirmed" : Model.Quote.Event.Venue)</span></div>
+                <div class="info-row">
+                    <span class="info-label">Schedule:</span>
+                    <span>
+                        @if (Model.Quote.Event.StartTime.HasValue && Model.Quote.Event.EndTime.HasValue)
+                        {
+                            @($"{Model.Quote.Event.StartTime.Value.ToString(@"hh\:mm")} - {Model.Quote.Event.EndTime.Value.ToString(@"hh\:mm")}")
+                        }
+                        else if (Model.Quote.Event.StartTime.HasValue)
+                        {
+
+                            @($"From {Model.Quote.Event.StartTime.Value.ToString(@"hh\:mm")}")
+                        }
+                        else
+                        {
+
+                            @("To Be Confirmed")
+                        }
+                    </span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Line Items Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Item</th>
+                <th>Description</th>
+                <th style="text-align:center">Price</th>
+                <th style="text-align:center">Qty</th>
+                <th style="text-align:center">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var itemsByCategory = Model.LineItems
+                .GroupBy(li => li.Category?.Name ?? "Uncategorized")
+                .OrderBy(g => g.Key);
+            }
+
+            @foreach (var categoryGroup in itemsByCategory)
+            {
+                var categoryTotal = categoryGroup.Sum(item => item.UnitPrice * item.Quantity);
+                <tr>
+                    <td colspan="6" class="category-header">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span>@categoryGroup.Key</span>
+                            <span style="font-weight:600;">@categoryTotal.ToString("C")</span>
+                        </div>
+                    </td>
+                </tr>
+                @foreach (var item in categoryGroup)
+                {
+                    <tr>
+                        <td>
+                            @if (item.IsRental)
+                            {
+                                <span style="background-color:#61a5c2;color:white;padding:2px 6px;border-radius:3px;font-size:8pt;">Rental</span>
+                            }
+                            else
+                            {
+                                @item.ProductType?.Name
+                            }
+                        </td>
+                        <td>@item.ProductName</td>
+                        <td>@item.ProductDescription</td>
+                        <td style="width:15%;text-align:center">@item.UnitPrice.ToString("C")</td>
+                        <td style="width:5%;text-align:center">@item.Quantity</td>
+                        <td style="width:15%;text-align:center">@((item.Quantity * item.UnitPrice).ToString("C"))</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="summary">
+        <p class="subtotals"><span>Subtotal:</span><span>@Model.Subtotal.ToString("C")</span></p>
+        @if (Model.Discount > 0)
+        {
+            <p class="subtotals"><span>Discount:</span><span class="negative">-@Model.Discount.ToString("C")</span></p>
+        }
+        <p class="total"><span>Total Amount:</span><span>@Model.Total.ToString("C")</span></p>
+        <p class="subtotals"><span>Amount Paid:</span><span class="positive">@Model.AmountPaid.ToString("C")</span></p>
+        <p class="total"><span>Balance Due:</span><span class="@(Model.BalanceDue > 0 ? "negative" : "positive")">@Model.BalanceDue.ToString("C")</span></p>
+    </div>
+
+    <!-- Banking Details -->
+    <div style="background:#f5f5f5;padding:20px;border-radius:5px;display:flex;justify-content:space-between;align-items:center;font-size:9px;max-width:320px;margin-top:30px;margin-bottom:10px;">
+        <div style="flex:0 0 auto;">
+            @if (!string.IsNullOrEmpty(ViewBag.BankLogoBase64 as string))
+            {
+                <img src="@ViewBag.BankLogoBase64" alt="Bank Logo" style="height:70px;" />
+            }
+        </div>
+        <div style="flex:1;text-align:left;padding-left:20px;">
+            <h4 style="margin:0 0 10px 0;color:#333;">Banking Details</h4>
+            <p style="margin:4px 0;"><strong>Bank:</strong> FNB/RMB</p>
+            <p style="margin:4px 0;"><strong>Account Name:</strong> Kief Klank Productions (Pty) Ltd.</p>
+            <p style="margin:4px 0;"><strong>Account Type:</strong> Business Gold Account</p>
+            <p style="margin:4px 0;"><strong>Account Number:</strong> 63139381478</p>
+            <p style="margin:4px 0;"><strong>Branch Code:</strong> 250655</p>
+            <p style="margin:4px 0;"><strong>Reference:</strong> @Model.InvoiceNumber</p>
+        </div>
+    </div>
+
+    <!-- Terms -->
+    <div class="quote-terms">
+        <h3>Invoice Terms &amp; Conditions</h3>
+        <p>• Payment is due within the agreed payment terms from the invoice date.</p>
+        <p>• A deposit (if applicable) confirms the booking, with the remaining balance payable prior to the event or service delivery.</p>
+        <p>• Ownership of equipment, content, and deliverables remains with the supplier until full payment has been received.</p>
+        <p>• Late payments may be subject to additional fees or interest.</p>
+        <p>• Any additional services, overtime, travel, accommodation, or equipment requested during the event/project will be invoiced separately.</p>
+        <p>• Final deliverables (photos, videos, audio, or other agreed services) will be released once the invoice has been settled in full.</p>
+        <p>• Please use the invoice number as reference when making payment.</p>
+        <p>• For queries regarding this invoice, please contact us at info@kiefproductions.co.za | 079 051 9451.</p>
+    </div>
+
+</body>
+</html>

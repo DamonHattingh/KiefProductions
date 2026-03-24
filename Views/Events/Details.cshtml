@@ -1,0 +1,167 @@
+@model KiefProductions.Models.Event
+@{ ViewData["Title"] = Model.EventName; }
+
+<div class="breadcrumb">
+    <a href="/Events">Events</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">@Model.EventName</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>@Model.EventName</h1>
+        <p>@Model.EventDate.ToString("dddd, dd MMMM yyyy") @(Model.Venue != null ? $"· {Model.Venue}" : "")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Events/Edit/@Model.Id" class="btn btn-secondary">Edit</a>
+        <div style="position:relative;">
+            <select class="form-select" style="width:160px;" onchange="updateStatus(this.value)">
+                @foreach (var s in Enum.GetValues<KiefProductions.Models.EventStatus>())
+                {
+                    <option value="@s" selected="@(Model.Status == s)">@s</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <!-- Event Info -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Event Information</h3></div>
+            <div class="card-body">
+                <div class="detail-row"><span class="detail-label">Event Name</span><span class="detail-value">@Model.EventName</span></div>
+                <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">@Model.EventDate.ToString("dd MMMM yyyy")</span></div>
+                @if (Model.EventEndDate.HasValue)
+                {
+                    <div class="detail-row"><span class="detail-label">End Date</span><span class="detail-value">@Model.EventEndDate?.ToString("dd MMMM yyyy")</span></div>
+                }
+                <div class="detail-row"><span class="detail-label">Venue</span><span class="detail-value">@(Model.Venue ?? "TBC")</span></div>
+                <div class="detail-row">
+                    <span class="detail-label">Schedule</span>
+                    <span class="detail-value">
+                        @if (Model.StartTime.HasValue && Model.EndTime.HasValue)
+                        { @($"{Model.StartTime:hh\\:mm} – {Model.EndTime:hh\\:mm}") }
+                        else if (Model.StartTime.HasValue)
+                        { @($"From {Model.StartTime:hh\\:mm}") }
+                        else { <span style="color:var(--text-muted)">TBC</span> }
+                    </span>
+                </div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-@Model.Status.ToString().ToLower()">@Model.Status</span></span></div>
+                @if (!string.IsNullOrEmpty(Model.Notes))
+                {
+                    <div class="detail-row"><span class="detail-label">Notes</span><span class="detail-value">@Model.Notes</span></div>
+                }
+                @if (Model.Quote != null)
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">Quote</span>
+                        <span class="detail-value">
+                            <a href="/Quotes/Details/@Model.Quote.Id" style="color:var(--orange);">@Model.Quote.QuoteNumber</a>
+                            — @Model.Quote.Client?.FullName
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Staff -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3>Assigned Staff (@Model.EventStaff.Count)</h3>
+                <button class="btn btn-secondary btn-sm" data-modal-open="assignStaffModal">Assign Staff</button>
+            </div>
+            @if (Model.EventStaff.Any())
+            {
+                <table class="table">
+                    <thead><tr><th>Name</th><th>Role</th><th>Rate Applied</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var es in Model.EventStaff)
+                        {
+                            <tr>
+                                <td style="font-weight:500;">@es.StaffMember.FullName</td>
+                                <td class="muted">@(es.RoleOnEvent ?? "—")</td>
+                                <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--orange);">R @es.FlatRateApplied.ToString("N2")</td>
+                                <td>
+                                    <form asp-action="RemoveStaff" asp-route-eventStaffId="@es.Id" asp-route-eventId="@Model.Id" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-danger btn-sm" data-confirm="Remove this staff member?">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state" style="padding:24px;"><p>No staff assigned yet</p></div>
+            }
+        </div>
+    </div>
+
+    <!-- Side -->
+    <div>
+        <div class="card">
+            <div class="card-header"><h3>Staff Cost Summary</h3></div>
+            <div class="card-body">
+                <div class="finance-row total-row">
+                    <span class="label">Total Staff Cost</span>
+                    <span class="value">R @Model.EventStaff.Sum(es => es.FlatRateApplied).ToString("N2")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Staff Modal -->
+<div class="modal-backdrop" id="assignStaffModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Assign Staff Member</h3>
+            <button class="btn-close" data-modal-close>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <form asp-action="AssignStaff" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="eventId" value="@Model.Id" />
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Select Staff Member</label>
+                    <select name="staffMemberId" class="form-select">
+                        <option value="">Choose staff member...</option>
+                        @{
+                            var assignedIds = Model.EventStaff.Select(es => es.StaffMemberId).ToHashSet();
+                        }
+                        @foreach (var staff in ViewData["AllStaff"] as IEnumerable<KiefProductions.Models.StaffMember> ?? Enumerable.Empty<KiefProductions.Models.StaffMember>())
+                        {
+                            if (!assignedIds.Contains(staff.Id))
+                            {
+                                <option value="@staff.Id">@staff.FullName (@staff.Role) — R @staff.FlatRate.ToString("N2")</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn-primary">Assign</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateStatus(status) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Events/UpdateStatus';
+            form.innerHTML = `<input name="id" value="@Model.Id" /><input name="status" value="${status}" /><input name="__RequestVerificationToken" value="${document.querySelector('[name=__RequestVerificationToken]')?.value ?? ''}" />`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    </script>
+}
