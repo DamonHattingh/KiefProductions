@@ -73,48 +73,84 @@
             </div>
         </div>
 
-        <!-- Line Items -->
-        <div class="card mb-3">
-            <div class="card-header"><h3>Line Items</h3></div>
-            @{
-                var grouped = Model.LineItems
-                .Where(li => li.ItemType != KiefProductions.Models.LineItemType.Expense)
-                .GroupBy(li => li.Category?.Name ?? "Uncategorized");
-            }
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Item</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Qty</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var group in grouped)
-                    {
+        @if (Model.Quote?.QuoteType == KiefProductions.Models.QuoteType.FreeText)
+        {
+            <!-- Free Text Sections -->
+            <div class="card mb-3">
+                <div class="card-header"><h3>Sections</h3></div>
+                @foreach (var sec in Model.Quote.FreeTextSections.OrderBy(s => s.SortOrder))
+                {
+                    <div style="border-bottom:1px solid var(--border);">
+                        <div style="background:var(--bg-elevated);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);">@sec.CategoryName</span>
+                            <span style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--orange);">R @((sec.Qty * sec.UnitPrice).ToString("N2"))</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(sec.DescriptionHtml))
+                        {
+                            <div style="padding:14px 16px;font-size:13px;line-height:1.6;color:var(--text-primary);">
+                                @Html.Raw(sec.DescriptionHtml)
+                            </div>
+                        }
+                        <div style="padding:10px 16px 14px;display:flex;gap:24px;font-size:12px;color:var(--text-muted);">
+                            <span>Qty: <strong style="color:var(--text-primary);">@sec.Qty.ToString("G")</strong></span>
+                            <span>Unit Price: <strong style="color:var(--text-primary);">R @sec.UnitPrice.ToString("N2")</strong></span>
+                            <span>Cost: <strong style="color:var(--text-primary);">R @sec.Cost.ToString("N2")</strong></span>
+                        </div>
+                    </div>
+                }
+                @if (!Model.Quote.FreeTextSections.Any())
+                {
+                    <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">No sections added yet.</div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="card mb-3">
+                <div class="card-header"><h3>Line Items</h3></div>
+                @{
+                    var grouped = Model.LineItems
+                    .Where(li => li.ItemType != KiefProductions.Models.LineItemType.Expense)
+                    .GroupBy(li => li.Category?.Name ?? "Uncategorized");
+                }
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td colspan="6" style="background:var(--bg-elevated);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);padding:8px 16px;">
-                                @group.Key
-                            </td>
+                            <th>Type</th>
+                            <th>Item</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Qty</th>
+                            <th>Total</th>
                         </tr>
-                        @foreach (var item in group)
+                    </thead>
+                    <tbody>
+                        @foreach (var group in grouped)
                         {
                             <tr>
-                                <td class="muted">@item.ProductType?.Name</td>
-                                <td style="font-weight:500;">@item.ProductName</td>
-                                <td class="muted">@item.ProductDescription</td>
-                                <td>R @item.UnitPrice.ToString("N2")</td>
-                                <td>@item.Quantity</td>
-                                <td style="font-family:'Outfit',sans-serif;font-weight:600;">R @((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                                <td colspan="6" style="background:var(--bg-elevated);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);padding:8px 16px;">
+                                    @group.Key
+                                </td>
                             </tr>
+                            @foreach (var item in group)
+                            {
+                                <tr>
+                                    <td class="muted">@item.ProductType?.Name</td>
+                                    <td style="font-weight:500;">@item.ProductName</td>
+                                    <td class="muted">@item.ProductDescription</td>
+                                    <td>R @item.UnitPrice.ToString("N2")</td>
+                                    <td>@item.Quantity</td>
+                                    <td style="font-family:'Outfit',sans-serif;font-weight:600;">R @((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                                </tr>
+                            }
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <!-- Line Items -->
+        
 
         <!-- Payment History -->
         <div class="card">

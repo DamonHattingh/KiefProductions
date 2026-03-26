@@ -209,28 +209,35 @@
                     this.$nextTick(() => this.initQuill(id, ''));
                 },
 
-                initQuill(id, initialHtml) {
-                    const el = document.getElementById('quill-editor-' + id);
-                    if (!el || this.quillInstances[id]) return;
-                    const quill = new Quill(el, {
-                        theme: 'snow',
-                        placeholder: 'Describe what is included in this section...',
-                        modules: {
-                            toolbar: [
-                                ['bold', 'italic', 'underline'],
-                                [{ list: 'ordered' }, { list: 'bullet' }],
-                                [{ indent: '-1' }, { indent: '+1' }],
-                                ['clean']
-                            ]
-                        }
-                    });
-                    if (initialHtml) quill.root.innerHTML = initialHtml;
-                    quill.on('text-change', () => {
-                        const sec = this.sections.find(s => s.id === id);
-                        if (sec) sec.descriptionHtml = quill.root.innerHTML;
-                    });
-                    this.quillInstances[id] = quill;
-                },
+                        initQuill(id, initialHtml) {
+
+            const el = document.getElementById('quill-editor-' + id);
+            if (!el || this.quillInstances[id]) return;
+
+            const quill = new Quill(el, {
+                theme: 'snow',
+                placeholder: 'Describe what is included in this section...',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ indent: '-1' }, { indent: '+1' }],
+                        ['clean']
+                    ]
+                }
+            });
+
+            if (initialHtml) {
+                quill.clipboard.dangerouslyPasteHTML(initialHtml);
+            }
+
+            quill.on('text-change', () => {
+                const sec = this.sections.find(s => s.id === id);
+                if (sec) sec.descriptionHtml = quill.root.innerHTML;
+            });
+
+            this.quillInstances[id] = quill;
+        },
 
                 removeSection(idx) {
                     const sec = this.sections[idx];
@@ -253,15 +260,41 @@
                     this.profitMargin = sub > 0 ? (this.netProfit / sub * 100) : 0;
                 },
 
-                buildSections() {
-                    return this.sections.map((s, idx) => ({
-                        categoryName: s.categoryName || 'Section ' + (idx + 1),
-                        descriptionHtml: s.descriptionHtml || '',
-                        qty: s.qty || 1,
-                        unitPrice: s.unitPrice || 0,
-                        cost: s.cost || 0
-                    }));
-                },
+                        buildSections() {
+
+            function normalizeQuillLists(html) {
+
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                temp.querySelectorAll('li[data-list="bullet"]').forEach(li => {
+
+                    const ul = document.createElement('ul');
+
+                    if (li.parentNode.tagName === 'OL') {
+                        li.parentNode.parentNode.insertBefore(ul, li.parentNode);
+                    }
+
+                    ul.appendChild(li.cloneNode(true));
+
+                    li.parentNode.removeChild(li);
+                });
+
+                temp.querySelectorAll('li[data-list]').forEach(li => {
+                    li.removeAttribute('data-list');
+                });
+
+                return temp.innerHTML;
+            }
+
+            return this.sections.map((s, idx) => ({
+                categoryName: s.categoryName || 'Section ' + (idx + 1),
+                descriptionHtml: normalizeQuillLists(s.descriptionHtml || ''),
+                qty: s.qty || 1,
+                unitPrice: s.unitPrice || 0,
+                cost: s.cost || 0
+            }));
+        },
 
                 saveDraft() {
                     document.getElementById('sectionsJson').value = JSON.stringify(this.buildSections());

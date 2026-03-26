@@ -1,11 +1,13 @@
 ﻿@model KiefProductions.Models.Quote
-@{ ViewData["Title"] = "Edit Quote"; }
+@{
+    ViewData["Title"] = "Edit Quote";
+}
 
 <div class="breadcrumb">
     <a href="/Quotes">Quotes</a>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
     <a href="/Quotes/Details/@Model.Id">@(Model.QuoteNumber ?? "Draft")</a>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
     <span class="current">Edit</span>
 </div>
 
@@ -14,7 +16,7 @@
     <input type="hidden" name="LineItemsJson" id="lineItemsJson" />
     <input type="hidden" name="IsDraft" id="isDraftInput" value="false" />
 
-    <div x-data="quoteBuilder()">
+    <div x-data="quoteBuilder()" x-init="init()" x-cloak>
         <div class="d-flex align-center gap-2 mb-3">
             <div style="flex:1;">
                 <select name="ClientId" class="form-select" style="max-width:300px;" x-model="clientId">
@@ -27,7 +29,7 @@
             </div>
             <button type="button" class="btn btn-ghost" @@click="saveDraft()">Save Draft</button>
             <button type="button" class="btn btn-primary" @@click="submitQuote()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /></svg>
                 Save Changes
             </button>
         </div>
@@ -80,13 +82,12 @@
                         <div class="builder-section">
                             <div class="builder-section-header">
                                 <div class="category-label">
-@*                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/></svg>
- *@                                    <select x-model="cat.categoryId" class="form-select" style="width:180px;background:transparent;border:1px solid var(--border-strong);color:var(--text-primary);font-weight:600;font-size:13px;">
-    <option value="">Select Category</option>
-    <template x-for="c in catalog.categories" :key="c.id">
-        <option :value="String(c.id)" x-text="c.name"></option>
-    </template>
-</select>
+                                    <select x-model="cat.categoryId" class="form-select" style="width:180px;background:transparent;border:1px solid var(--border-strong);color:var(--text-primary);font-weight:600;font-size:13px;" @@change="onCategoryChange(cat)">
+                                        <option value="">Select Category</option>
+                                        <template x-for="c in catalog.categories" :key="c.id">
+                                            <option :value="String(c.id)" x-text="c.name"></option>
+                                        </template>
+                                    </select>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <button type="button" class="btn btn-ghost btn-sm" @@click="addLineItem(catIdx, 'Gear')">+ Gear</button>
@@ -94,7 +95,7 @@
                                     <button type="button" class="btn btn-ghost btn-sm" @@click="addLineItem(catIdx, 'Custom')">+ Custom</button>
                                     <button type="button" class="btn btn-danger btn-sm" @@click="addLineItem(catIdx, 'Expense')" style="background:var(--red-bg);color:var(--red);">+ Expense</button>
                                     <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeCategory(catIdx)">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                     </button>
                                 </div>
                             </div>
@@ -103,41 +104,55 @@
                                     <div>
                                         <template x-if="item.itemType === 'Gear' || item.itemType === 'Rental'">
                                             <select x-model="item.productTypeId" class="form-select form-select-sm" @@change="loadProducts(cat, item)">
-    <option value="">Type</option>
-    <template x-for="pt in getProductTypes(cat.categoryId)" :key="pt.id">
-        <option :value="String(pt.id)" x-text="pt.name"></option>
-    </template>
-</select>
+                                                <option value="">Select Type</option>
+                                                <template x-for="pt in getProductTypes(cat.categoryId)" :key="pt.id">
+                                                    <option :value="String(pt.id)" x-text="pt.name"></option>
+                                                </template>
+                                            </select>
                                         </template>
                                         <template x-if="item.itemType === 'Custom'">
-        <select x-model="item.productTypeId" class="form-select form-select-sm" @@change="loadProducts(cat, item)">
-            <option value="">Custom Type</option>
-            <template x-for="pt in getProductTypes(cat.categoryId)" :key="pt.id">
-                <option :value="String(pt.id)" x-text="pt.name"></option>
-            </template>
-        </select>
-    </template>
-                                        <template x-if="item.itemType === 'Expense'"><span class="badge" style="background:var(--red-bg);color:var(--red);">Expense</span></template>
+                                            <select x-model="item.productTypeId" class="form-select form-select-sm" @@change="loadProducts(cat, item)">
+                                                <option value="">Select Custom Type</option>
+                                                <template x-for="pt in getProductTypes(cat.categoryId)" :key="pt.id">
+                                                    <option :value="String(pt.id)" x-text="pt.name"></option>
+                                                </template>
+                                            </select>
+                                        </template>
+                                        <template x-if="item.itemType === 'Expense'">
+                                            <span class="badge" style="background:var(--red-bg);color:var(--red);">Expense</span>
+                                        </template>
                                     </div>
                                     <div>
                                         <template x-if="item.itemType === 'Gear' || item.itemType === 'Rental'">
-                                           <select x-model="item.productName" class="form-select form-select-sm" @@change="fillFromProduct(cat, item)">
-    <option value="">Select item</option>
-    <template x-for="p in item.availableProducts" :key="p.name">
-        <option :value="p.name" x-text="p.name"></option>
-    </template>
-</select>
+                                            <select x-model="item.productName" class="form-select form-select-sm" @@change="fillFromProduct(cat, item)">
+                                                <option value="">Select item</option>
+                                                <template x-for="p in item.availableProducts" :key="p.name">
+                                                    <option :value="p.name" x-text="p.name"></option>
+                                                </template>
+                                            </select>
                                         </template>
                                         <template x-if="item.itemType === 'Custom' || item.itemType === 'Expense'">
                                             <input type="text" x-model="item.productName" class="form-control form-control-sm" placeholder="Name" />
                                         </template>
                                     </div>
-                                    <div><input type="text" x-model="item.productDescription" class="form-control form-control-sm" :readonly="item.itemType === 'Gear' || item.itemType === 'Rental'" /></div>
-                                    <div><input type="number" x-model.number="item.unitPrice" class="form-control form-control-sm" step="0.01" :readonly="item.itemType === 'Expense'" :style="item.itemType === 'Expense' ? 'background:var(--bg-hover);' : ''" @@input="recalc()" /></div>
-                                    <div><input type="number" x-model.number="item.quantity" class="form-control form-control-sm" min="1" style="width:54px;" @@input="recalc()" /></div>
-                                    <div><input type="number" x-model.number="item.costPrice" class="form-control form-control-sm" step="0.01" :readonly="item.itemType === 'Gear'" :style="item.itemType === 'Gear' ? 'background:var(--bg-hover);' : ''" @@input="recalc()" /></div>
+                                    <div>
+                                        <input type="text" x-model="item.productDescription" class="form-control form-control-sm" :readonly="item.itemType === 'Gear' || item.itemType === 'Rental'" />
+                                    </div>
+                                    <div>
+                                        <input type="number" x-model.number="item.unitPrice" class="form-control form-control-sm" step="0.01" min="0" :readonly="item.itemType === 'Expense'" :style="item.itemType === 'Expense' ? 'background:var(--bg-hover);' : ''" @@input="recalc()" />
+                                    </div>
+                                    <div>
+                                        <input type="number" x-model.number="item.quantity" class="form-control form-control-sm" min="1" style="width:74px;" @@input="recalc()" />
+                                    </div>
+                                    <div>
+                                        <input type="number" x-model.number="item.costPrice" class="form-control form-control-sm" step="0.01" min="0" :readonly="item.itemType === 'Gear'" :style="item.itemType === 'Gear' ? 'background:var(--bg-hover);' : ''" @@input="recalc()" />
+                                    </div>
                                     <div class="row-total" x-text="'R ' + rowTotal(item).toFixed(2)"></div>
-                                    <div><button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeItem(catIdx, itemIdx)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+                                    <div>
+                                        <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeItem(catIdx, itemIdx)">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </template>
                             <div x-show="cat.items.length === 0" style="padding:12px 16px;color:var(--text-muted);font-size:13px;">No items yet</div>
@@ -148,14 +163,20 @@
                         <div class="builder-section">
                             <div class="builder-section-header">
                                 <div class="category-label" style="color:var(--purple);">Bundle</div>
-                                <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removePackage(pkgIdx)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                                <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removePackage(pkgIdx)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                                </button>
                             </div>
                             <div class="line-item-row">
                                 <div><span class="badge" style="background:var(--purple-bg);color:var(--purple);">Package</span></div>
                                 <div style="font-weight:500;" x-text="pkg.productName"></div>
-                                <div><template x-for="itm in pkg.packageContents" :key="itm"><div style="font-size:12px;color:var(--text-muted);" x-text="itm"></div></template></div>
-                                <div><input type="number" x-model.number="pkg.unitPrice" class="form-control form-control-sm" step="0.01" @@input="recalc()" /></div>
-                                <div><input type="number" x-model.number="pkg.quantity" class="form-control form-control-sm" min="1" style="width:54px;" @@input="recalc()" /></div>
+                                <div>
+                                    <template x-for="itm in pkg.packageContents" :key="itm">
+                                        <div style="font-size:12px;color:var(--text-muted);" x-text="itm"></div>
+                                    </template>
+                                </div>
+                                <div><input type="number" x-model.number="pkg.unitPrice" class="form-control form-control-sm" step="0.01" min="0" @@input="recalc()" /></div>
+                                <div><input type="number" x-model.number="pkg.quantity" class="form-control form-control-sm" min="1" style="width:74px;" @@input="recalc()" /></div>
                                 <div><input type="number" value="0" class="form-control form-control-sm" style="background:var(--bg-hover);" readonly /></div>
                                 <div class="row-total" x-text="'R ' + (pkg.unitPrice * pkg.quantity).toFixed(2)"></div>
                                 <div></div>
@@ -168,27 +189,27 @@
 
             <div>
                 <div class="finance-summary mb-3">
-                    <div class="finance-row"><span class="label">Subtotal</span><span class="value" x-text="'R ' + subtotal.toFixed(2)"></span></div>
+                    <div class="finance-row"><span class="label">Subtotal</span><span class="value" x-text="'R ' + (subtotal || 0).toFixed(2)"></span></div>
                     <div class="finance-row">
                         <span class="label">Discount</span>
                         <div class="input-group" style="width:120px;">
                             <span class="input-group-text">R</span>
-                            <input type="number" name="Discount" x-model.number="discount" class="form-control form-control-sm" step="0.01" min="0" @@input="recalc()" />
+                            <input type="number" name="Discount" x-model.number="discount" class="form-control form-control-sm" step="0.01" min="0" value="@Model.Discount" @@input="recalc()" />
                         </div>
                     </div>
-                    <div class="finance-row total-row"><span class="label">Total</span><span class="value" x-text="'R ' + total.toFixed(2)"></span></div>
+                    <div class="finance-row total-row"><span class="label">Total</span><span class="value" x-text="'R ' + (total || 0).toFixed(2)"></span></div>
                 </div>
                 <div class="card">
                     <div class="card-header" style="cursor:pointer;" @@click="showProfit = !showProfit">
                         <h3>Profit Analysis</h3>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="showProfit ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9" /></svg>
                     </div>
                     <div x-show="showProfit" class="card-body" style="padding:0;">
-                        <div class="finance-row"><span class="label">Revenue</span><span class="value" x-text="'R ' + revenue.toFixed(2)"></span></div>
-                        <div class="finance-row"><span class="label">Costs</span><span class="value" style="color:var(--red);" x-text="'R ' + totalCost.toFixed(2)"></span></div>
-                        <div class="finance-row"><span class="label">Expenses</span><span class="value" style="color:var(--red);" x-text="'R ' + totalExpenses.toFixed(2)"></span></div>
-                        <div class="finance-row profit-row"><span class="label">Net Profit</span><span class="value" :class="netProfit >= 0 ? 'positive' : 'negative'" x-text="'R ' + netProfit.toFixed(2)"></span></div>
-                        <div class="finance-row"><span class="label">Margin</span><span class="value" x-text="profitMargin.toFixed(1) + '%'"></span></div>
+                        <div class="finance-row"><span class="label">Revenue</span><span class="value" x-text="'R ' + (revenue || 0).toFixed(2)"></span></div>
+                        <div class="finance-row"><span class="label">Costs</span><span class="value" style="color:var(--red);" x-text="'R ' + (totalCost || 0).toFixed(2)"></span></div>
+                        <div class="finance-row"><span class="label">Expenses</span><span class="value" style="color:var(--red);" x-text="'R ' + (totalExpenses || 0).toFixed(2)"></span></div>
+                        <div class="finance-row profit-row"><span class="label">Net Profit</span><span class="value" :class="netProfit >= 0 ? 'positive' : 'negative'" x-text="'R ' + (netProfit || 0).toFixed(2)"></span></div>
+                        <div class="finance-row"><span class="label">Margin</span><span class="value" x-text="(profitMargin || 0).toFixed(1) + '%'"></span></div>
                     </div>
                 </div>
             </div>
@@ -198,7 +219,9 @@
             <div class="modal modal-lg">
                 <div class="modal-header">
                     <h3>Select Package</h3>
-                    <button class="btn-close" @@click="showPackageModal = false"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                    <button class="btn-close" @@click="showPackageModal = false">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;">
@@ -222,9 +245,23 @@
 
 @section Styles {
     <style>
-        .form-select-sm { padding: 5px 30px 5px 10px; font-size: 12.5px; }
-        .form-control-sm { padding: 5px 10px; font-size: 12.5px; }
-        .line-item-row .form-control, .line-item-row .form-select { min-width: 0; }
+        .form-select-sm {
+            padding: 5px 30px 5px 10px;
+            font-size: 12.5px;
+        }
+
+        .form-control-sm {
+            padding: 5px 10px;
+            font-size: 12.5px;
+        }
+
+        .line-item-row .form-control, .line-item-row .form-select {
+            min-width: 0;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 }
 
@@ -232,338 +269,401 @@
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
     <script>
         const existingItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-    Model.LineItems?.Select(li => new {
-        id = li.Id,
-        itemType = li.ItemType.ToString(),
-        categoryId = li.CategoryId,
-        categoryName = li.Category?.Name, // Add this to debug
-        productTypeId = li.ProductTypeId,
-        productTypeName = li.ProductType?.Name, // Add this to debug
-        packageId = li.PackageId,
-        productName = li.ProductName,
-        productDescription = li.ProductDescription,
-        unitPrice = li.UnitPrice,
-        costPrice = li.CostPrice,
-        quantity = li.Quantity,
-        isExpense = li.IsExpense
-    }) ?? Enumerable.Empty<object>()
-));
+        Model.LineItems?.Select(li => new
+        {
+            id = li.Id,
+            itemType = li.ItemType.ToString(),
+            categoryId = li.CategoryId,
+            categoryName = li.Category?.Name,
+            productTypeId = li.ProductTypeId,
+            productTypeName = li.ProductType?.Name,
+            packageId = li.PackageId,
+            productName = li.ProductName,
+            productDescription = li.ProductDescription,
+            unitPrice = li.UnitPrice,
+            costPrice = li.CostPrice,
+            quantity = li.Quantity,
+            isExpense = li.IsExpense
+        }) ?? Enumerable.Empty<object>()
+    ));
 
-console.log('Existing items from server:', existingItems);
+        console.log('=== EDIT VIEW LOADED ===');
+        console.log('Existing items from server:', existingItems);
 
         function quoteBuilder() {
             return {
                 catalog: { categories: [], packages: [] },
-                categories: [], packageItems: [],
+                categories: [],
+                packageItems: [],
                 clientId: '@Model.ClientId',
-                discount: @Model.Discount,
-                subtotal: 0, total: 0, revenue: 0,
-                totalCost: 0, totalExpenses: 0,
-                netProfit: 0, profitMargin: 0,
-                showProfit: false, showPackageModal: false,
+                discount: parseFloat('@Model.Discount') || 0,
+                subtotal: 0,
+                total: 0,
+                revenue: 0,
+                totalCost: 0,
+                totalExpenses: 0,
+                netProfit: 0,
+                profitMargin: 0,
+                showProfit: false,
+                showPackageModal: false,
+                initialized: false,
 
-
-
-            async init() {
-    console.log('=== INIT START ===');
-    
-    // Load catalog first
-    const res = await fetch('/Quotes/GetCatalog');
-    this.catalog = await res.json();
-    
-    console.log('Catalog loaded:', {
-        categoriesCount: this.catalog.categories.length,
-        packagesCount: this.catalog.packages.length
-    });
-
-    // Clear existing categories
-    this.categories = [];
-    this.packageItems = [];
-    
-    const catSections = {};
-
-    for (const item of existingItems) {
-        console.log('Processing item type:', item.itemType);
-        
-        if (item.itemType === 'Package') {
-            const catalogPkg = this.catalog.packages.find(p => p.id == item.packageId);
-            this.packageItems.push({
-                itemType: 'Package',
-                packageId: item.packageId,
-                productName: item.productName || '',
-                productDescription: item.productDescription || '',
-                unitPrice: item.unitPrice,
-                costPrice: 0,
-                quantity: item.quantity,
-                packageContents: catalogPkg
-                    ? catalogPkg.items.map(pi => `×${pi.quantity} ${pi.gearName || pi.customDescription}`)
-                    : []
-            });
-            continue;
-        }
-
-        const catId = item.categoryId ? String(item.categoryId) : '';
-        const key = catId ? `cat_${catId}` : `custom_${Math.random()}`;
-
-        if (!catSections[key]) {
-            catSections[key] = { 
-                categoryId: catId, 
-                items: [] 
-            };
-            this.categories.push(catSections[key]);
-        }
-
-        // Create the restored item
-        const restored = {
-            itemType: item.itemType,
-            categoryId: catId,
-            productTypeId: item.productTypeId ? String(item.productTypeId) : '',
-            productName: item.productName || '',
-            productDescription: item.productDescription || '',
-            unitPrice: item.isExpense ? 0 : item.unitPrice,
-            costPrice: item.costPrice || 0,
-            quantity: item.quantity,
-            availableProducts: []  // Start empty, will populate
-        };
-        
-        // Load available products for gear and rental items
-        if ((item.itemType === 'Gear' || item.itemType === 'Rental') && item.categoryId && item.productTypeId) {
-            const catData = this.catalog.categories.find(c => String(c.id) === String(item.categoryId));
-            
-            if (catData) {
-                const pt = catData.productTypes.find(t => String(t.id) === String(item.productTypeId));
-                
-                if (pt) {
-                    if (item.itemType === 'Gear') {
-                        restored.availableProducts = pt.gears.map(g => ({ 
-                            name: g.name, 
-                            description: g.description, 
-                            marketPrice: g.marketPrice, 
-                            ourCost: 0 
-                        }));
-                    } else if (item.itemType === 'Rental') {
-                        restored.availableProducts = pt.rentalGears.map(rg => ({ 
-                            name: rg.name, 
-                            description: rg.description, 
-                            marketPrice: rg.marketPrice, 
-                            ourCost: rg.ourCost 
-                        }));
+                async init() {
+                    // Prevent double initialization
+                    if (this.initialized) {
+                        console.log('Already initialized, skipping');
+                        return;
                     }
-                    
-                    console.log(`Loaded ${restored.availableProducts.length} products for ${item.productName}`);
-                }
-            }
-        }
 
-        catSections[key].items.push(restored);
-    }
+                    console.log('=== QUOTE BUILDER INIT START ===');
+                    this.initialized = true;
 
-    // CRITICAL FIX: Force Alpine to re-render by creating new arrays
-    await this.$nextTick();
-    
-    // Force a complete refresh of the categories array
-    this.categories = this.categories.map(cat => ({
-        ...cat,
-        items: cat.items.map(item => ({
-            ...item,
-            // Create a new array reference for availableProducts
-            availableProducts: [...item.availableProducts]
-        }))
-    }));
-    
-    // Force a final refresh
-    this.categories = [...this.categories];
-    
-    console.log('Final categories:', this.categories.map(cat => ({
-        categoryId: cat.categoryId,
-        items: cat.items.map(item => ({
-            itemType: item.itemType,
-            productName: item.productName,
-            productTypeId: item.productTypeId,
-            availableProductsCount: item.availableProducts.length,
-            availableProducts: item.availableProducts.map(p => p.name)
-        }))
-    })));
-    
-    this.recalc();
-},
+                    // Load catalog first
+                    try {
+                        const res = await fetch('/Quotes/GetCatalog');
+                        this.catalog = await res.json();
+                        console.log('Catalog loaded:', {
+                            categoriesCount: this.catalog.categories.length,
+                            packagesCount: this.catalog.packages.length
+                        });
+                    } catch (error) {
+                        console.error('Error loading catalog:', error);
+                    }
 
-               getProductTypes(categoryId) {
-    console.log('getProductTypes called with categoryId:', categoryId, typeof categoryId);
-    if (!categoryId) {
-        console.log('No categoryId, returning empty array');
-        return [];
-    }
-    
-    // Convert both to string for comparison
-    const cat = this.catalog.categories.find(c => String(c.id) === String(categoryId));
-    console.log('Found category:', cat);
-    
-    if (!cat) {
-        console.warn(`Category ${categoryId} not found. Available categories:`, 
-            this.catalog.categories.map(c => ({ id: c.id, name: c.name, idType: typeof c.id })));
-        return [];
-    }
-    
-    const result = cat.productTypes || [];
-    console.log('Returning productTypes:', result.map(pt => ({ id: pt.id, name: pt.name, idType: typeof pt.id })));
-    return result;
-},
+                    // Clear existing categories
+                    this.categories = [];
+                    this.packageItems = [];
 
-                addCategory() { this.categories.push({ categoryId: '', items: [] }); },
-                removeCategory(idx) { this.categories.splice(idx, 1); this.recalc(); },
+                    const catSections = {};
 
-                addLineItem(catIdx, type) {
-                    this.categories[catIdx].items.push({
-                        itemType: type, categoryId: this.categories[catIdx].categoryId,
-                        productTypeId: '', productName: '', productDescription: '',
-                        unitPrice: 0, costPrice: 0, quantity: 1, availableProducts: []
+                    for (const item of existingItems) {
+                        console.log('Processing item:', item);
+
+                        if (item.itemType === 'Package') {
+                            const catalogPkg = this.catalog.packages?.find(p => p.id == item.packageId);
+                            this.packageItems.push({
+                                itemType: 'Package',
+                                packageId: item.packageId,
+                                productName: item.productName || '',
+                                productDescription: item.productDescription || '',
+                                unitPrice: parseFloat(item.unitPrice) || 0,
+                                costPrice: 0,
+                                quantity: parseInt(item.quantity) || 1,
+                                packageContents: catalogPkg
+                                    ? catalogPkg.items.map(pi => `×${pi.quantity} ${pi.gearName || pi.customDescription}`)
+                                    : []
+                            });
+                            continue;
+                        }
+
+                        const catId = item.categoryId ? String(item.categoryId) : '';
+                        const key = catId ? `cat_${catId}` : `custom_${Math.random()}`;
+
+                        if (!catSections[key]) {
+                            const category = this.catalog.categories?.find(c => String(c.id) === catId);
+                            catSections[key] = {
+                                categoryId: catId,
+                                items: [],
+                                categoryName: category?.name || ''
+                            };
+                            this.categories.push(catSections[key]);
+                        }
+
+                        // Create the restored item with proper numeric values
+                        const restored = {
+                            itemType: item.itemType,
+                            categoryId: catId,
+                            productTypeId: item.productTypeId ? String(item.productTypeId) : '',
+                            productName: item.productName || '',
+                            productDescription: item.productDescription || '',
+                            unitPrice: parseFloat(item.unitPrice) || 0,
+                            costPrice: parseFloat(item.costPrice) || 0,
+                            quantity: parseInt(item.quantity) || 1,
+                            availableProducts: []
+                        };
+
+                        // Load available products for gear and rental items
+                        if ((item.itemType === 'Gear' || item.itemType === 'Rental') && item.categoryId && item.productTypeId) {
+                            const catData = this.catalog.categories?.find(c => String(c.id) === String(item.categoryId));
+
+                            if (catData) {
+                                const pt = catData.productTypes?.find(t => String(t.id) === String(item.productTypeId));
+
+                                if (pt) {
+                                    if (item.itemType === 'Gear') {
+                                        restored.availableProducts = pt.gears?.map(g => ({
+                                            name: g.name,
+                                            description: g.description,
+                                            marketPrice: parseFloat(g.marketPrice) || 0,
+                                            ourCost: 0
+                                        })) || [];
+                                    } else if (item.itemType === 'Rental') {
+                                        restored.availableProducts = pt.rentalGears?.map(rg => ({
+                                            name: rg.name,
+                                            description: rg.description,
+                                            marketPrice: parseFloat(rg.marketPrice) || 0,
+                                            ourCost: parseFloat(rg.ourCost) || 0
+                                        })) || [];
+                                    }
+
+                                    console.log(`Loaded ${restored.availableProducts.length} products for ${item.productName}`);
+                                }
+                            }
+                        }
+
+                        catSections[key].items.push(restored);
+                    }
+
+                    console.log('Final categories count:', this.categories.length);
+                    console.log('Package items count:', this.packageItems.length);
+
+                    // Force a refresh
+                    this.categories = [...this.categories];
+                    this.packageItems = [...this.packageItems];
+                    this.recalc();
+                },
+
+                onCategoryChange(cat) {
+                    console.log('Category changed:', cat.categoryId);
+                    // Reset items when category changes
+                    cat.items.forEach(item => {
+                        item.productTypeId = '';
+                        item.productName = '';
+                        item.productDescription = '';
+                        item.unitPrice = 0;
+                        item.costPrice = 0;
+                        item.availableProducts = [];
                     });
                 },
 
-                removeItem(catIdx, itemIdx) { this.categories[catIdx].items.splice(itemIdx, 1); this.recalc(); },
+                getProductTypes(categoryId) {
+                    if (!categoryId) return [];
+                    const cat = this.catalog.categories?.find(c => String(c.id) === String(categoryId));
+                    return cat?.productTypes || [];
+                },
+
+                addCategory() {
+                    this.categories.push({
+                        categoryId: '',
+                        items: []
+                    });
+                },
+
+                removeCategory(idx) {
+                    this.categories.splice(idx, 1);
+                    this.recalc();
+                },
+
+                addLineItem(catIdx, type) {
+                    this.categories[catIdx].items.push({
+                        itemType: type,
+                        categoryId: this.categories[catIdx].categoryId,
+                        productTypeId: '',
+                        productName: '',
+                        productDescription: '',
+                        unitPrice: 0,
+                        costPrice: 0,
+                        quantity: 1,
+                        availableProducts: []
+                    });
+                },
+
+                removeItem(catIdx, itemIdx) {
+                    this.categories[catIdx].items.splice(itemIdx, 1);
+                    this.recalc();
+                },
 
                 loadProducts(cat, item) {
-    console.log('loadProducts called for item:', item.itemType, 'categoryId:', cat.categoryId, 'productTypeId:', item.productTypeId);
-    
-    // Reset product fields
-    item.productName = '';
-    item.productDescription = '';
-    item.unitPrice = 0;
-    item.costPrice = 0;
-    item.availableProducts = [];
-    
-    if (!cat.categoryId || !item.productTypeId) {
-        console.log('Missing categoryId or productTypeId');
-        return;
-    }
-    
-    const catData = this.catalog.categories.find(c => String(c.id) === String(cat.categoryId));
-    if (!catData) {
-        console.warn('Category not found:', cat.categoryId);
-        return;
-    }
-    
-    const pt = catData.productTypes.find(t => String(t.id) === String(item.productTypeId));
-    if (!pt) {
-        console.warn('Product type not found:', item.productTypeId);
-        return;
-    }
-    
-    // Populate available products based on item type
-    if (item.itemType === 'Gear') {
-        item.availableProducts = pt.gears.map(g => ({ 
-            name: g.name, 
-            description: g.description, 
-            marketPrice: g.marketPrice, 
-            ourCost: 0 
-        }));
-    } else if (item.itemType === 'Rental') {
-        item.availableProducts = pt.rentalGears.map(rg => ({ 
-            name: rg.name, 
-            description: rg.description, 
-            marketPrice: rg.marketPrice, 
-            ourCost: rg.ourCost 
-        }));
-    } else if (item.itemType === 'Custom') {
-        // Load custom templates if they exist
-        item.availableProducts = pt.customTemplates?.map(ct => ({
-            name: ct.name,
-            description: ct.description,
-            marketPrice: ct.price || 0,
-            ourCost: ct.cost || 0
-        })) || [];
-    }
-    
-    console.log(`Loaded ${item.availableProducts.length} products for ${item.itemType}`);
-    
-    // Trigger reactivity
-    item.availableProducts = [...item.availableProducts];
-},
+                    console.log('loadProducts:', item.itemType, 'category:', cat.categoryId, 'productType:', item.productTypeId);
+
+                    // Reset product fields
+                    item.productName = '';
+                    item.productDescription = '';
+                    item.unitPrice = 0;
+                    item.costPrice = 0;
+                    item.availableProducts = [];
+
+                    if (!cat.categoryId || !item.productTypeId) {
+                        console.log('Missing categoryId or productTypeId');
+                        return;
+                    }
+
+                    const catData = this.catalog.categories?.find(c => String(c.id) === String(cat.categoryId));
+                    if (!catData) {
+                        console.warn('Category not found:', cat.categoryId);
+                        return;
+                    }
+
+                    const pt = catData.productTypes?.find(t => String(t.id) === String(item.productTypeId));
+                    if (!pt) {
+                        console.warn('Product type not found:', item.productTypeId);
+                        return;
+                    }
+
+                    // Populate available products based on item type
+                    if (item.itemType === 'Gear') {
+                        item.availableProducts = pt.gears?.map(g => ({
+                            name: g.name,
+                            description: g.description,
+                            marketPrice: parseFloat(g.marketPrice) || 0,
+                            ourCost: 0
+                        })) || [];
+                    } else if (item.itemType === 'Rental') {
+                        item.availableProducts = pt.rentalGears?.map(rg => ({
+                            name: rg.name,
+                            description: rg.description,
+                            marketPrice: parseFloat(rg.marketPrice) || 0,
+                            ourCost: parseFloat(rg.ourCost) || 0
+                        })) || [];
+                    } else if (item.itemType === 'Custom') {
+                        item.availableProducts = pt.customTemplates?.map(ct => ({
+                            name: ct.name,
+                            description: ct.description,
+                            marketPrice: parseFloat(ct.price) || 0,
+                            ourCost: parseFloat(ct.cost) || 0
+                        })) || [];
+                    }
+
+                    console.log(`Loaded ${item.availableProducts.length} products for ${item.itemType}`);
+                    item.availableProducts = [...item.availableProducts];
+                },
 
                 fillFromProduct(cat, item) {
-                    const p = item.availableProducts.find(x => x.name === item.productName);
+                    const p = item.availableProducts?.find(x => x.name === item.productName);
                     if (p) {
                         item.productDescription = p.description || '';
-                        item.unitPrice = item.itemType === 'Gear' ? p.marketPrice : (p.ourCost || p.marketPrice);
-                        item.costPrice = item.itemType === 'Gear' ? 0 : p.marketPrice;
+                        if (item.itemType === 'Gear') {
+                            item.unitPrice = p.marketPrice;
+                            item.costPrice = 0;
+                        } else if (item.itemType === 'Rental') {
+                            item.unitPrice = p.marketPrice;
+                            item.costPrice = p.ourCost;
+                        } else if (item.itemType === 'Custom') {
+                            item.unitPrice = p.marketPrice;
+                            item.costPrice = p.ourCost;
+                        }
                         this.recalc();
                     }
                 },
 
                 addPackage(pkg) {
                     this.packageItems.push({
-                        itemType: 'Package', packageId: pkg.id,
-                        productName: pkg.name, productDescription: `Package: ${pkg.name}`,
-                        unitPrice: pkg.basePrice, costPrice: 0, quantity: 1,
-                        packageContents: pkg.items.map(i => `×${i.quantity} ${i.gearName || i.customDescription}`)
+                        itemType: 'Package',
+                        packageId: pkg.id,
+                        productName: pkg.name,
+                        productDescription: `Package: ${pkg.name}`,
+                        unitPrice: parseFloat(pkg.basePrice) || 0,
+                        costPrice: 0,
+                        quantity: 1,
+                        packageContents: pkg.items?.map(i => `×${i.quantity} ${i.gearName || i.customDescription}`) || []
                     });
                     this.recalc();
                 },
 
-                removePackage(idx) { this.packageItems.splice(idx, 1); this.recalc(); },
+                removePackage(idx) {
+                    this.packageItems.splice(idx, 1);
+                    this.recalc();
+                },
 
                 rowTotal(item) {
-                    if (item.itemType === 'Expense') return item.quantity * (item.costPrice || 0);
-                    return item.quantity * (item.unitPrice || 0);
+                    if (item.itemType === 'Expense') {
+                        return (item.quantity || 0) * (item.costPrice || 0);
+                    }
+                    return (item.quantity || 0) * (item.unitPrice || 0);
                 },
 
                 recalc() {
                     let sub = 0, rev = 0, costs = 0, expenses = 0;
+
                     this.categories.forEach(cat => {
                         cat.items.forEach(item => {
                             item.categoryId = cat.categoryId;
                             const t = this.rowTotal(item);
                             sub += t;
-                            if (item.itemType === 'Expense') { expenses += t; }
-                            else { rev += t; costs += item.quantity * (item.costPrice || 0); }
+                            if (item.itemType === 'Expense') {
+                                expenses += t;
+                            } else {
+                                rev += t;
+                                costs += (item.quantity || 0) * (item.costPrice || 0);
+                            }
                         });
                     });
-                    this.packageItems.forEach(pkg => { const t = pkg.quantity * pkg.unitPrice; sub += t; rev += t; });
+
+                    this.packageItems.forEach(pkg => {
+                        const t = (pkg.quantity || 0) * (pkg.unitPrice || 0);
+                        sub += t;
+                        rev += t;
+                    });
+
                     this.subtotal = sub;
                     this.total = Math.max(sub - (this.discount || 0), 0);
-                    this.revenue = rev; this.totalCost = costs; this.totalExpenses = expenses;
+                    this.revenue = rev;
+                    this.totalCost = costs;
+                    this.totalExpenses = expenses;
                     this.netProfit = rev - costs - expenses;
                     this.profitMargin = rev > 0 ? (this.netProfit / rev * 100) : 0;
+
+                    console.log('Recalc - Subtotal:', this.subtotal, 'Total:', this.total);
                 },
 
                 buildLineItems() {
                     const items = [];
+
                     this.categories.forEach(cat => {
                         cat.items.forEach(item => {
                             items.push({
-                                categoryId:    parseInt(cat.categoryId) || 0,
+                                categoryId: parseInt(cat.categoryId) || 0,
                                 productTypeId: parseInt(item.productTypeId) || 0,
-                                packageId:     0,
-                                productName:   item.productName,
-                                productDescription: item.productDescription,
-                                unitPrice:  item.itemType === 'Expense' ? 0 : (item.unitPrice || 0),
-                                costPrice:  item.costPrice || 0,
-                                quantity:   item.quantity || 1,
-                                itemType:   item.itemType
+                                packageId: 0,
+                                productName: item.productName || '',
+                                productDescription: item.productDescription || '',
+                                unitPrice: item.itemType === 'Expense' ? 0 : (parseFloat(item.unitPrice) || 0),
+                                costPrice: parseFloat(item.costPrice) || 0,
+                                quantity: parseInt(item.quantity) || 1,
+                                itemType: item.itemType
                             });
                         });
                     });
+
                     this.packageItems.forEach(pkg => {
                         items.push({
-                            categoryId: 0, productTypeId: 0, packageId: pkg.packageId,
-                            productName: pkg.productName, productDescription: pkg.productDescription,
-                            unitPrice: pkg.unitPrice || 0, costPrice: 0,
-                            quantity: pkg.quantity || 1, itemType: 'Package'
+                            categoryId: 0,
+                            productTypeId: 0,
+                            packageId: pkg.packageId,
+                            productName: pkg.productName || '',
+                            productDescription: pkg.productDescription || '',
+                            unitPrice: parseFloat(pkg.unitPrice) || 0,
+                            costPrice: 0,
+                            quantity: parseInt(pkg.quantity) || 1,
+                            itemType: 'Package'
                         });
                     });
+
+                    console.log('Building line items - total items:', items.length);
                     return items;
                 },
 
                 saveDraft() {
-                    document.getElementById('lineItemsJson').value = JSON.stringify(this.buildLineItems());
+                    const lineItemsJson = JSON.stringify(this.buildLineItems());
+                    console.log('=== SAVING DRAFT ===');
+                    console.log('Line items count:', this.buildLineItems().length);
+
+                    document.getElementById('lineItemsJson').value = lineItemsJson;
                     document.getElementById('isDraftInput').value = 'true';
                     document.getElementById('quoteForm').submit();
                 },
 
                 submitQuote() {
-                    if (!this.clientId) { alert('Please select a client.'); return; }
-                    document.getElementById('lineItemsJson').value = JSON.stringify(this.buildLineItems());
+                    if (!this.clientId) {
+                        alert('Please select a client.');
+                        return;
+                    }
+
+                    const lineItemsJson = JSON.stringify(this.buildLineItems());
+                    console.log('=== SUBMITTING QUOTE ===');
+                    console.log('Line items count:', this.buildLineItems().length);
+
+                    document.getElementById('lineItemsJson').value = lineItemsJson;
                     document.getElementById('isDraftInput').value = 'false';
                     document.getElementById('quoteForm').submit();
                 }

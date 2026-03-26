@@ -50,9 +50,14 @@ public class InvoicesController : Controller
     {
         var invoice = await _context.Invoices
             .Include(i => i.Client)
-            .Include(i => i.Quote).ThenInclude(q => q.Event)
-            .Include(i => i.LineItems).ThenInclude(li => li.Category)
-            .Include(i => i.LineItems).ThenInclude(li => li.ProductType)
+            .Include(i => i.Quote)
+                .ThenInclude(q => q.Event)
+            .Include(i => i.Quote)
+                .ThenInclude(q => q.FreeTextSections)
+            .Include(i => i.LineItems)
+                .ThenInclude(li => li.Category)
+            .Include(i => i.LineItems)
+                .ThenInclude(li => li.ProductType)
             .Include(i => i.Payments)
             .FirstOrDefaultAsync(i => i.Id == id);
 

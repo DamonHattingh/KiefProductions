@@ -2,7 +2,8 @@
 @using System.Text.Json
 @{
     ViewData["Title"] = "Edit Quote";
-    var sectionsJson = JsonSerializer.Serialize(Model.FreeTextSections.OrderBy(s => s.SortOrder).Select(s => new {
+    var sectionsJson = JsonSerializer.Serialize(Model.FreeTextSections.OrderBy(s => s.SortOrder).Select(s => new
+    {
         id = s.Id,
         categoryName = s.CategoryName,
         descriptionHtml = s.DescriptionHtml ?? "",
@@ -14,9 +15,9 @@
 
 <div class="breadcrumb">
     <a href="/Quotes">Quotes</a>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
     <a href="/Quotes/Details/@Model.Id">@(Model.QuoteNumber ?? "Draft")</a>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
     <span class="current">Edit</span>
 </div>
 
@@ -25,8 +26,7 @@
     <input type="hidden" name="SectionsJson" id="sectionsJson" />
     <input type="hidden" name="IsDraft" id="isDraftInput" value="false" />
 
-    <div x-data="freeTextBuilder()" x-init="init()">
-
+    <div x-data="freeTextBuilder()" x-init="init()" x-cloak>
         <!-- Top bar -->
         <div class="d-flex align-center gap-2 mb-3">
             <div style="flex:1;">
@@ -40,7 +40,7 @@
             </div>
             <button type="button" class="btn btn-ghost" @@click="saveDraft()">Save Draft</button>
             <button type="button" class="btn btn-primary" @@click="submitQuote()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /></svg>
                 Save Changes
             </button>
         </div>
@@ -93,7 +93,7 @@
                                        style="max-width:320px;font-weight:600;"
                                        placeholder="Section name (e.g. Sound, Lighting, Labour)" />
                                 <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeSection(idx)">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                                 </button>
                             </div>
 
@@ -117,7 +117,7 @@
                                 <div style="text-align:right;">
                                     <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Section Total</div>
                                     <div style="font-family:'Outfit',sans-serif;font-weight:700;font-size:16px;color:var(--orange);"
-                                         x-text="'R ' + (section.qty * section.unitPrice).toFixed(2)"></div>
+                                         x-text="'R ' + ((section.qty || 0) * (section.unitPrice || 0)).toFixed(2)"></div>
                                 </div>
                             </div>
                         </div>
@@ -134,7 +134,7 @@
                 <div class="finance-summary mb-3">
                     <div class="finance-row">
                         <span class="label">Subtotal</span>
-                        <span class="value" x-text="'R ' + subtotal.toFixed(2)"></span>
+                        <span class="value" x-text="'R ' + (subtotal || 0).toFixed(2)"></span>
                     </div>
                     <div class="finance-row">
                         <span class="label">Discount</span>
@@ -145,48 +145,87 @@
                     </div>
                     <div class="finance-row total-row">
                         <span class="label">Total</span>
-                        <span class="value" x-text="'R ' + total.toFixed(2)"></span>
+                        <span class="value" x-text="'R ' + (total || 0).toFixed(2)"></span>
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="card-header" style="cursor:pointer;" @@click="showProfit = !showProfit">
                         <h3>Profit Analysis</h3>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="showProfit ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" :style="showProfit ? 'transform:rotate(180deg)' : ''"><polyline points="6 9 12 15 18 9" /></svg>
                     </div>
                     <div x-show="showProfit" class="card-body" style="padding:0;">
-                        <div class="finance-row"><span class="label">Revenue</span><span class="value" x-text="'R ' + revenue.toFixed(2)"></span></div>
-                        <div class="finance-row"><span class="label">Costs</span><span class="value" style="color:var(--red);" x-text="'R ' + totalCost.toFixed(2)"></span></div>
+                        <div class="finance-row"><span class="label">Revenue</span><span class="value" x-text="'R ' + (revenue || 0).toFixed(2)"></span></div>
+                        <div class="finance-row"><span class="label">Costs</span><span class="value" style="color:var(--red);" x-text="'R ' + (totalCost || 0).toFixed(2)"></span></div>
                         <div class="finance-row profit-row">
                             <span class="label">Net Profit</span>
-                            <span class="value" :class="netProfit >= 0 ? 'positive' : 'negative'" x-text="'R ' + netProfit.toFixed(2)"></span>
+                            <span class="value" :class="netProfit >= 0 ? 'positive' : 'negative'" x-text="'R ' + (netProfit || 0).toFixed(2)"></span>
                         </div>
                         <div class="finance-row">
                             <span class="label">Margin</span>
-                            <span class="value" x-text="profitMargin.toFixed(1) + '%'"></span>
+                            <span class="value" x-text="(profitMargin || 0).toFixed(1) + '%'"></span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </form>
 
 @section Styles {
     <link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet" />
     <style>
-        .ql-toolbar { background: var(--bg-elevated); border-color: var(--border) !important; border-radius: 6px 6px 0 0; }
-        .ql-container { background: var(--bg-elevated); border-color: var(--border) !important; border-radius: 0 0 6px 6px; font-size: 13px; color: var(--text-primary); }
-        .ql-editor { min-height: 100px; }
-        .ql-editor.ql-blank::before { color: var(--text-muted); font-style: normal; }
-        .ql-stroke { stroke: var(--text-muted) !important; }
-        .ql-fill { fill: var(--text-muted) !important; }
-        .ql-picker-label { color: var(--text-muted) !important; }
-        .ql-toolbar button:hover .ql-stroke, .ql-toolbar button.ql-active .ql-stroke { stroke: var(--orange) !important; }
-        .ql-toolbar button:hover .ql-fill, .ql-toolbar button.ql-active .ql-fill { fill: var(--orange) !important; }
-        .form-control-sm { padding: 5px 10px; font-size: 12.5px; }
-        [x-cloak] { display: none !important; }
+        .ql-toolbar {
+            background: var(--bg-elevated);
+            border-color: var(--border) !important;
+            border-radius: 6px 6px 0 0;
+        }
+
+        .ql-container {
+            background: var(--bg-elevated);
+            border-color: var(--border) !important;
+            border-radius: 0 0 6px 6px;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .ql-editor {
+            min-height: 100px;
+        }
+
+            .ql-editor.ql-blank::before {
+                color: var(--text-muted);
+                font-style: normal;
+            }
+
+        .ql-stroke {
+            stroke: var(--text-muted) !important;
+        }
+
+        .ql-fill {
+            fill: var(--text-muted) !important;
+        }
+
+        .ql-picker-label {
+            color: var(--text-muted) !important;
+        }
+
+        .ql-toolbar button:hover .ql-stroke, .ql-toolbar button.ql-active .ql-stroke {
+            stroke: var(--orange) !important;
+        }
+
+        .ql-toolbar button:hover .ql-fill, .ql-toolbar button.ql-active .ql-fill {
+            fill: var(--orange) !important;
+        }
+
+        .form-control-sm {
+            padding: 5px 10px;
+            font-size: 12.5px;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 }
 
@@ -194,70 +233,153 @@
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
     <script>
+        // Global flag to prevent double initialization
+        let freeTextBuilderInitialized = false;
+
         const existingSections = @Html.Raw(sectionsJson);
+
+        console.log('=== FREE TEXT VIEW LOADED ===');
+        console.log('Existing sections from server:', existingSections);
 
         function freeTextBuilder() {
             return {
                 sections: [],
                 quillInstances: {},
-                nextId: 10000,
+                nextId: Date.now(), // Use timestamp for unique IDs
                 clientId: '@Model.ClientId',
-                discount: @Model.Discount,
-                subtotal: @Model.Subtotal,
-                total: @Model.Total,
+                discount: parseFloat('@Model.Discount') || 0,
+                subtotal: parseFloat('@Model.Subtotal') || 0,
+                total: parseFloat('@Model.Total') || 0,
                 revenue: 0,
                 totalCost: 0,
                 netProfit: 0,
                 profitMargin: 0,
                 showProfit: false,
+                initialized: false,
 
                 init() {
-                    existingSections.forEach(s => {
-                        this.sections.push({
-                            id: s.id,
-                            categoryName: s.categoryName,
-                            descriptionHtml: s.descriptionHtml,
-                            qty: s.qty,
-                            unitPrice: s.unitPrice,
-                            cost: s.cost
+                    // Prevent double initialization
+                    if (this.initialized) {
+                        console.log('Already initialized, skipping');
+                        return;
+                    }
+
+                    console.log('FreeTextBuilder init() called');
+                    this.initialized = true;
+
+                    // Load sections
+                    if (existingSections && existingSections.length > 0) {
+                        console.log('Loading existing sections:', existingSections);
+                        existingSections.forEach(s => {
+                            this.sections.push({
+                                id: s.id,
+                                categoryName: s.categoryName || '',
+                                descriptionHtml: s.descriptionHtml || '',
+                                qty: parseFloat(s.qty) || 0,
+                                unitPrice: parseFloat(s.unitPrice) || 0,
+                                cost: parseFloat(s.cost) || 0
+                            });
                         });
-                        this.$nextTick(() => this.initQuill(s.id, s.descriptionHtml));
+                    }
+
+                    console.log('Sections after load:', this.sections.length, 'sections');
+
+                    // Wait for DOM to be ready before initializing Quill
+                    this.$nextTick(() => {
+                        this.initAllQuills();
                     });
+
                     this.recalc();
+                },
+
+                initAllQuills() {
+                    console.log('Initializing all Quill editors');
+                    this.sections.forEach(section => {
+                        this.initQuill(section.id, section.descriptionHtml);
+                    });
                 },
 
                 addSection() {
                     const id = this.nextId++;
-                    this.sections.push({ id, categoryName: '', descriptionHtml: '', qty: 1, unitPrice: 0, cost: 0 });
-                    this.$nextTick(() => this.initQuill(id, ''));
+                    console.log('Adding new section with id:', id);
+                    this.sections.push({
+                        id: id,
+                        categoryName: '',
+                        descriptionHtml: '',
+                        qty: 1,
+                        unitPrice: 0,
+                        cost: 0
+                    });
+
+                    // Initialize Quill after the DOM is updated
+                    this.$nextTick(() => {
+                        this.initQuill(id, '');
+                    });
                 },
 
                 initQuill(id, initialHtml) {
                     const el = document.getElementById('quill-editor-' + id);
-                    if (!el || this.quillInstances[id]) return;
-                    const quill = new Quill(el, {
-                        theme: 'snow',
-                        placeholder: 'Describe what is included in this section...',
-                        modules: {
-                            toolbar: [
-                                ['bold', 'italic', 'underline'],
-                                [{ list: 'ordered' }, { list: 'bullet' }],
-                                [{ indent: '-1' }, { indent: '+1' }],
-                                ['clean']
-                            ]
+                    if (!el) {
+                        console.log('Quill element not found for id:', id, '- will retry');
+                        // Retry after a short delay
+                        setTimeout(() => {
+                            const retryEl = document.getElementById('quill-editor-' + id);
+                            if (retryEl) {
+                                this.initQuill(id, initialHtml);
+                            } else {
+                                console.error('Quill element still not found for id:', id);
+                            }
+                        }, 100);
+                        return;
+                    }
+
+                    if (this.quillInstances[id]) {
+                        console.log('Quill already initialized for id:', id);
+                        return;
+                    }
+
+                    console.log('Initializing Quill for id:', id);
+                    try {
+                        const quill = new Quill(el, {
+                            theme: 'snow',
+                            placeholder: 'Describe what is included in this section...',
+                            modules: {
+                                toolbar: [
+                                    ['bold', 'italic', 'underline'],
+                                    [{ list: 'ordered' }, { list: 'bullet' }],
+                                    [{ indent: '-1' }, { indent: '+1' }],
+                                    ['clean']
+                                ]
+                            }
+                        });
+
+                        if (initialHtml) {
+                            quill.root.innerHTML = initialHtml;
+                            console.log('Set initial HTML for id:', id);
                         }
-                    });
-                    if (initialHtml) quill.root.innerHTML = initialHtml;
-                    quill.on('text-change', () => {
-                        const sec = this.sections.find(s => s.id === id);
-                        if (sec) sec.descriptionHtml = quill.root.innerHTML;
-                    });
-                    this.quillInstances[id] = quill;
+
+                        quill.on('text-change', () => {
+                            const sec = this.sections.find(s => s.id === id);
+                            if (sec) {
+                                sec.descriptionHtml = quill.root.innerHTML;
+                            }
+                        });
+
+                        this.quillInstances[id] = quill;
+                        console.log('Quill initialized successfully for id:', id);
+                    } catch (error) {
+                        console.error('Error initializing Quill for id:', id, error);
+                    }
                 },
 
                 removeSection(idx) {
                     const sec = this.sections[idx];
-                    delete this.quillInstances[sec.id];
+                    if (!sec) return;
+
+                    console.log('Removing section:', sec.id);
+                    if (this.quillInstances[sec.id]) {
+                        delete this.quillInstances[sec.id];
+                    }
                     this.sections.splice(idx, 1);
                     this.recalc();
                 },
@@ -265,37 +387,62 @@
                 recalc() {
                     let sub = 0, costs = 0;
                     this.sections.forEach(s => {
-                        sub += (s.qty || 0) * (s.unitPrice || 0);
-                        costs += s.cost || 0;
+                        const qty = parseFloat(s.qty) || 0;
+                        const unitPrice = parseFloat(s.unitPrice) || 0;
+                        const cost = parseFloat(s.cost) || 0;
+                        sub += qty * unitPrice;
+                        costs += cost;
                     });
+
                     this.subtotal = sub;
-                    this.total = Math.max(sub - (this.discount || 0), 0);
+                    this.total = Math.max(sub - (parseFloat(this.discount) || 0), 0);
                     this.revenue = sub;
                     this.totalCost = costs;
                     this.netProfit = sub - costs;
                     this.profitMargin = sub > 0 ? (this.netProfit / sub * 100) : 0;
+
+                    console.log('Recalc - Subtotal:', this.subtotal, 'Total:', this.total);
                 },
 
                 buildSections() {
-                    return this.sections.map((s, idx) => ({
+                    const builtSections = this.sections.map((s, idx) => ({
                         categoryName: s.categoryName || 'Section ' + (idx + 1),
                         descriptionHtml: s.descriptionHtml || '',
-                        qty: s.qty || 1,
-                        unitPrice: s.unitPrice || 0,
-                        cost: s.cost || 0
+                        qty: parseFloat(s.qty) || 0,
+                        unitPrice: parseFloat(s.unitPrice) || 0,
+                        cost: parseFloat(s.cost) || 0
                     }));
+                    console.log('Building sections for save:', builtSections.length, 'sections');
+                    return builtSections;
                 },
 
                 saveDraft() {
-                    document.getElementById('sectionsJson').value = JSON.stringify(this.buildSections());
+                    const sectionsJson = JSON.stringify(this.buildSections());
+                    console.log('=== SAVING DRAFT ===');
+                    console.log('Sections count:', this.sections.length);
+                    console.log('Sections JSON length:', sectionsJson.length);
+
+                    document.getElementById('sectionsJson').value = sectionsJson;
                     document.getElementById('isDraftInput').value = 'true';
+
                     document.getElementById('quoteForm').submit();
                 },
 
                 submitQuote() {
-                    if (!this.clientId) { alert('Please select a client.'); return; }
-                    document.getElementById('sectionsJson').value = JSON.stringify(this.buildSections());
+                    if (!this.clientId) {
+                        console.log('No client selected');
+                        alert('Please select a client.');
+                        return;
+                    }
+
+                    const sectionsJson = JSON.stringify(this.buildSections());
+                    console.log('=== SUBMITTING QUOTE ===');
+                    console.log('Sections count:', this.sections.length);
+                    console.log('Sections JSON length:', sectionsJson.length);
+
+                    document.getElementById('sectionsJson').value = sectionsJson;
                     document.getElementById('isDraftInput').value = 'false';
+
                     document.getElementById('quoteForm').submit();
                 }
             };
