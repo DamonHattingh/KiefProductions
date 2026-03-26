@@ -20,7 +20,10 @@ public class Quote
     public DateTime DueDate { get; set; } = DateTime.Now.AddDays(30);
     public DateTime? LastSaved { get; set; }
 
+    public QuoteType QuoteType { get; set; } = QuoteType.Itemized;
+
     public ICollection<QuoteLineItem> LineItems { get; set; } = new List<QuoteLineItem>();
+    public ICollection<FreeTextQuoteSection> FreeTextSections { get; set; } = new List<FreeTextQuoteSection>();
     public ProfitSummary? ProfitSummary { get; set; }
     public Event? Event { get; set; }
     public Invoice? Invoice { get; set; }
@@ -33,4 +36,10 @@ public enum QuoteStatus
     Approved,
     Rejected,
     Converted
+}
+
+public enum QuoteType
+{
+    Itemized,
+    FreeText
 }

@@ -19,7 +19,14 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
             Export PDF
         </a>
-        <a href="/Quotes/Edit/@Model.Id" class="btn btn-secondary">Edit</a>
+        @if (Model.QuoteType == KiefProductions.Models.QuoteType.FreeText)
+        {
+            <a href="/Quotes/EditFreeText/@Model.Id" class="btn btn-secondary">Edit</a>
+        }
+        else
+        {
+            <a href="/Quotes/Edit/@Model.Id" class="btn btn-secondary">Edit</a>
+        }
 
         <form asp-action="Duplicate" asp-route-id="@Model.Id" method="post" style="display:inline;">
             @Html.AntiForgeryToken()
@@ -74,100 +81,134 @@
             </div>
         </div>
 
-        <!-- Line Items -->
-        <div class="card mb-3">
-            <div class="card-header"><h3>Line Items</h3></div>
-            @{
-                var packageItems = Model.LineItems.Where(li => li.ItemType == KiefProductions.Models.LineItemType.Package).ToList();
-                var regularItems = Model.LineItems.Where(li => li.ItemType != KiefProductions.Models.LineItemType.Package && !li.IsExpense);
-                var expenseItems = Model.LineItems.Where(li => li.IsExpense).ToList();
-                var grouped = regularItems.GroupBy(li => li.Category?.Name ?? "Uncategorized");
-            }
+        @if (Model.QuoteType == KiefProductions.Models.QuoteType.FreeText)
+        {
+            <!-- Free Text Sections -->
+            <div class="card mb-3">
+                <div class="card-header"><h3>Sections</h3></div>
+                @foreach (var sec in Model.FreeTextSections.OrderBy(s => s.SortOrder))
+                {
+                    <div style="border-bottom:1px solid var(--border);">
+                        <div style="background:var(--bg-elevated);padding:10px 16px;display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);">@sec.CategoryName</span>
+                            <span style="font-family:'Outfit',sans-serif;font-weight:700;color:var(--orange);">R @((sec.Qty * sec.UnitPrice).ToString("N2"))</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(sec.DescriptionHtml))
+                        {
+                            <div style="padding:14px 16px;font-size:13px;line-height:1.6;color:var(--text-primary);">
+                                @Html.Raw(sec.DescriptionHtml)
+                            </div>
+                        }
+                        <div style="padding:10px 16px 14px;display:flex;gap:24px;font-size:12px;color:var(--text-muted);">
+                            <span>Qty: <strong style="color:var(--text-primary);">@sec.Qty.ToString("G")</strong></span>
+                            <span>Unit Price: <strong style="color:var(--text-primary);">R @sec.UnitPrice.ToString("N2")</strong></span>
+                            <span>Cost: <strong style="color:var(--text-primary);">R @sec.Cost.ToString("N2")</strong></span>
+                        </div>
+                    </div>
+                }
+                @if (!Model.FreeTextSections.Any())
+                {
+                    <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">No sections added yet.</div>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- Line Items -->
+            <div class="card mb-3">
+                <div class="card-header"><h3>Line Items</h3></div>
+                @{
+                    var packageItems = Model.LineItems.Where(li => li.ItemType == KiefProductions.Models.LineItemType.Package).ToList();
+                    var regularItems = Model.LineItems.Where(li => li.ItemType != KiefProductions.Models.LineItemType.Package && !li.IsExpense);
+                    var expenseItems = Model.LineItems.Where(li => li.IsExpense).ToList();
+                    var grouped = regularItems.GroupBy(li => li.Category?.Name ?? "Uncategorized");
+                }
 
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Item</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Qty</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var pkg in packageItems)
-                    {
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td colspan="6" style="background:var(--bg-elevated);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--purple);padding:8px 16px;">
-                                Bundle
-                            </td>
+                            <th>Type</th>
+                            <th>Item</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Qty</th>
+                            <th>Total</th>
                         </tr>
-                        <tr>
-                            <td><span class="badge" style="background:var(--purple-bg);color:var(--purple);">Package</span></td>
-                            <td style="font-weight:500;">@pkg.ProductName</td>
-                            <td class="muted">
-                                @if (pkg.Package != null)
-                                {
-                                    @foreach (var pi in pkg.Package.PackageItems)
-                                    {
-                                        <div style="font-size:12px;">×@pi.Quantity @(pi.Gear?.Name ?? pi.CustomDescription)</div>
-                                    }
-                                }
-                            </td>
-                            <td>R @pkg.UnitPrice.ToString("N2")</td>
-                            <td>@pkg.Quantity</td>
-                            <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--orange);">R @((pkg.Quantity * pkg.UnitPrice).ToString("N2"))</td>
-                        </tr>
-                    }
-
-                    @foreach (var group in grouped)
-                    {
-                        <tr>
-                            <td colspan="6" style="background:var(--bg-elevated);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);padding:8px 16px;">
-                                @group.Key
-                            </td>
-                        </tr>
-                        @foreach (var item in group)
+                    </thead>
+                    <tbody>
+                        @foreach (var pkg in packageItems)
                         {
                             <tr>
-                                <td class="muted">@(item.IsRental ? "Rental" : item.ProductType?.Name)</td>
-                                <td style="font-weight:500;">@item.ProductName</td>
-                                <td class="muted">@item.ProductDescription</td>
-                                <td>R @item.UnitPrice.ToString("N2")</td>
-                                <td>@item.Quantity</td>
-                                <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--orange);">R @((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                                <td colspan="6" style="background:var(--bg-elevated);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--purple);padding:8px 16px;">
+                                    Bundle
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge" style="background:var(--purple-bg);color:var(--purple);">Package</span></td>
+                                <td style="font-weight:500;">@pkg.ProductName</td>
+                                <td class="muted">
+                                    @if (pkg.Package != null)
+                                    {
+                                        @foreach (var pi in pkg.Package.PackageItems)
+                                        {
+                                            <div style="font-size:12px;">×@pi.Quantity @(pi.Gear?.Name ?? pi.CustomDescription)</div>
+                                        }
+                                    }
+                                </td>
+                                <td>R @pkg.UnitPrice.ToString("N2")</td>
+                                <td>@pkg.Quantity</td>
+                                <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--orange);">R @((pkg.Quantity * pkg.UnitPrice).ToString("N2"))</td>
                             </tr>
                         }
-                    }
-                </tbody>
-            </table>
-        </div>
 
-        <!-- Expenses (internal) -->
-        @if (expenseItems.Any())
-        {
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h3 style="color:var(--red);">Internal Expenses</h3>
-                    <span style="font-size:12px;color:var(--text-muted);">Not shown on client PDF</span>
-                </div>
-                <table class="table">
-                    <thead><tr><th>Description</th><th>Notes</th><th>Qty</th><th>Cost</th><th>Total</th></tr></thead>
-                    <tbody>
-                        @foreach (var exp in expenseItems)
+                        @foreach (var group in grouped)
                         {
-                            <tr style="background:rgba(239,68,68,0.03);">
-                                <td style="font-weight:500;">@exp.ProductName</td>
-                                <td class="muted">@exp.ProductDescription</td>
-                                <td>@exp.Quantity</td>
-                                <td>R @((exp.CostPrice ?? 0).ToString("N2"))</td>
-                                <td style="color:var(--red);font-weight:600;">R @((exp.Quantity * (exp.CostPrice ?? 0)).ToString("N2"))</td>
+                            <tr>
+                                <td colspan="6" style="background:var(--bg-elevated);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--orange);padding:8px 16px;">
+                                    @group.Key
+                                </td>
                             </tr>
+                            @foreach (var item in group)
+                            {
+                                <tr>
+                                    <td class="muted">@(item.IsRental ? "Rental" : item.ProductType?.Name)</td>
+                                    <td style="font-weight:500;">@item.ProductName</td>
+                                    <td class="muted">@item.ProductDescription</td>
+                                    <td>R @item.UnitPrice.ToString("N2")</td>
+                                    <td>@item.Quantity</td>
+                                    <td style="font-family:'Outfit',sans-serif;font-weight:600;color:var(--orange);">R @((item.Quantity * item.UnitPrice).ToString("N2"))</td>
+                                </tr>
+                            }
                         }
                     </tbody>
                 </table>
             </div>
+
+            <!-- Expenses (internal) -->
+            @if (expenseItems.Any())
+            {
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3 style="color:var(--red);">Internal Expenses</h3>
+                        <span style="font-size:12px;color:var(--text-muted);">Not shown on client PDF</span>
+                    </div>
+                    <table class="table">
+                        <thead><tr><th>Description</th><th>Notes</th><th>Qty</th><th>Cost</th><th>Total</th></tr></thead>
+                        <tbody>
+                            @foreach (var exp in expenseItems)
+                            {
+                                <tr style="background:rgba(239,68,68,0.03);">
+                                    <td style="font-weight:500;">@exp.ProductName</td>
+                                    <td class="muted">@exp.ProductDescription</td>
+                                    <td>@exp.Quantity</td>
+                                    <td>R @((exp.CostPrice ?? 0).ToString("N2"))</td>
+                                    <td style="color:var(--red);font-weight:600;">R @((exp.Quantity * (exp.CostPrice ?? 0)).ToString("N2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         }
     </div>
 

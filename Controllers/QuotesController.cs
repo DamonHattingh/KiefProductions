@@ -51,15 +51,25 @@ public class QuotesController : Controller
 
         if (quote == null) return NotFound();
 
-        quote.LineItems = await _context.QuoteLineItems
-            .Where(li => li.QuoteId == id)
-            .Include(li => li.Category)
-            .Include(li => li.ProductType)
-            .Include(li => li.Package)
-                .ThenInclude(p => p.PackageItems)
-                .ThenInclude(pi => pi.Gear)
-                .ThenInclude(g => g.ProductType)
-            .ToListAsync();
+        if (quote.QuoteType == QuoteType.FreeText)
+        {
+            quote.FreeTextSections = await _context.FreeTextQuoteSections
+                .Where(s => s.QuoteId == id)
+                .OrderBy(s => s.SortOrder)
+                .ToListAsync();
+        }
+        else
+        {
+            quote.LineItems = await _context.QuoteLineItems
+                .Where(li => li.QuoteId == id)
+                .Include(li => li.Category)
+                .Include(li => li.ProductType)
+                .Include(li => li.Package)
+                    .ThenInclude(p => p.PackageItems)
+                    .ThenInclude(pi => pi.Gear)
+                    .ThenInclude(g => g.ProductType)
+                .ToListAsync();
+        }
 
         return View(quote);
     }
@@ -70,6 +80,218 @@ public class QuotesController : Controller
         var quote = new Quote { DateIssued = DateTime.Now, DueDate = DateTime.Now.AddDays(30) };
         if (clientId.HasValue) quote.ClientId = clientId.Value;
         return View(quote);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreateFreeText(int? clientId)
+    {
+        await PopulateViewBag();
+        var quote = new Quote { DateIssued = DateTime.Now, DueDate = DateTime.Now.AddDays(30), QuoteType = QuoteType.FreeText };
+        if (clientId.HasValue) quote.ClientId = clientId.Value;
+        return View(quote);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateFreeText([FromForm] FreeTextQuoteFormModel form)
+    {
+        if (form.ClientId <= 0)
+        {
+            TempData["Error"] = "Please select a client.";
+            await PopulateViewBag();
+            return View(new Quote { ClientId = form.ClientId, QuoteType = QuoteType.FreeText });
+        }
+
+        var quote = new Quote
+        {
+            ClientId = form.ClientId,
+            Discount = form.Discount,
+            QuoteType = QuoteType.FreeText,
+            Status = form.IsDraft ? QuoteStatus.Draft : QuoteStatus.Pending,
+            DateIssued = DateTime.Now,
+            DueDate = DateTime.Now.AddDays(30),
+            LastSaved = DateTime.Now
+        };
+
+        if (!form.IsDraft)
+        {
+            int count = await _context.Quotes.CountAsync(q => q.Status != QuoteStatus.Draft);
+            quote.QuoteNumber = $"QUO-{(count + 100):0000}";
+        }
+
+        var sections = string.IsNullOrEmpty(form.SectionsJson)
+            ? new List<FreeTextSectionDto>()
+            : JsonSerializer.Deserialize<List<FreeTextSectionDto>>(form.SectionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+
+        quote.Subtotal = sections.Sum(s => s.Qty * s.UnitPrice);
+        quote.Total = quote.Subtotal - quote.Discount;
+
+        _context.Quotes.Add(quote);
+        await _context.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(form.EventName))
+        {
+            _context.Events.Add(new Event
+            {
+                EventName = form.EventName,
+                EventDate = form.EventDate ?? DateTime.Today,
+                Venue = form.Venue,
+                StartTime = form.StartTime,
+                EndTime = form.EndTime,
+                Status = EventStatus.Quoted,
+                QuoteId = quote.Id
+            });
+        }
+
+        foreach (var (s, idx) in sections.Select((s, i) => (s, i)))
+        {
+            _context.FreeTextQuoteSections.Add(new FreeTextQuoteSection
+            {
+                QuoteId = quote.Id,
+                CategoryName = s.CategoryName,
+                DescriptionHtml = s.DescriptionHtml,
+                Qty = s.Qty,
+                UnitPrice = s.UnitPrice,
+                Cost = s.Cost,
+                SortOrder = idx
+            });
+        }
+
+        var revenue = sections.Sum(s => s.Qty * s.UnitPrice);
+        var costs = sections.Sum(s => s.Cost);
+        var net = revenue - costs;
+
+        _context.ProfitSummaries.Add(new ProfitSummary
+        {
+            QuoteId = quote.Id,
+            TotalRevenue = revenue,
+            TotalCost = costs,
+            TotalExpenses = 0,
+            NetProfit = net,
+            ProfitMargin = revenue > 0 ? (net / revenue * 100) : 0
+        });
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = form.IsDraft ? "Draft saved." : $"Quote {quote.QuoteNumber} created.";
+        return RedirectToAction(nameof(Details), new { id = quote.Id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditFreeText(int id)
+    {
+        var quote = await _context.Quotes
+            .Include(q => q.Client)
+            .Include(q => q.Event)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (quote == null) return NotFound();
+
+        quote.FreeTextSections = await _context.FreeTextQuoteSections
+            .Where(s => s.QuoteId == id)
+            .OrderBy(s => s.SortOrder)
+            .ToListAsync();
+
+        await PopulateViewBag();
+        return View(quote);
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditFreeText(int id, [FromForm] FreeTextQuoteFormModel form)
+    {
+        var quote = await _context.Quotes
+            .Include(q => q.Event)
+            .Include(q => q.FreeTextSections)
+            .Include(q => q.ProfitSummary)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (quote == null) return NotFound();
+
+        quote.ClientId = form.ClientId;
+        quote.Discount = form.Discount;
+        quote.LastSaved = DateTime.Now;
+
+        if (!form.IsDraft && quote.Status == QuoteStatus.Draft)
+        {
+            int count = await _context.Quotes.CountAsync(q => q.Status != QuoteStatus.Draft && q.Id != id);
+            quote.QuoteNumber ??= $"QUO-{(count + 100):0000}";
+            quote.Status = QuoteStatus.Pending;
+        }
+
+        if (!string.IsNullOrEmpty(form.EventName))
+        {
+            if (quote.Event != null)
+            {
+                quote.Event.EventName = form.EventName;
+                quote.Event.EventDate = form.EventDate ?? DateTime.Today;
+                quote.Event.Venue = form.Venue;
+                quote.Event.StartTime = form.StartTime;
+                quote.Event.EndTime = form.EndTime;
+            }
+            else
+            {
+                _context.Events.Add(new Event
+                {
+                    EventName = form.EventName,
+                    EventDate = form.EventDate ?? DateTime.Today,
+                    Venue = form.Venue,
+                    StartTime = form.StartTime,
+                    EndTime = form.EndTime,
+                    Status = EventStatus.Quoted,
+                    QuoteId = quote.Id
+                });
+            }
+        }
+
+        _context.FreeTextQuoteSections.RemoveRange(quote.FreeTextSections);
+
+        var sections = string.IsNullOrEmpty(form.SectionsJson)
+            ? new List<FreeTextSectionDto>()
+            : JsonSerializer.Deserialize<List<FreeTextSectionDto>>(form.SectionsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
+
+        foreach (var (s, idx) in sections.Select((s, i) => (s, i)))
+        {
+            _context.FreeTextQuoteSections.Add(new FreeTextQuoteSection
+            {
+                QuoteId = quote.Id,
+                CategoryName = s.CategoryName,
+                DescriptionHtml = s.DescriptionHtml,
+                Qty = s.Qty,
+                UnitPrice = s.UnitPrice,
+                Cost = s.Cost,
+                SortOrder = idx
+            });
+        }
+
+        quote.Subtotal = sections.Sum(s => s.Qty * s.UnitPrice);
+        quote.Total = quote.Subtotal - quote.Discount;
+
+        var revenue = sections.Sum(s => s.Qty * s.UnitPrice);
+        var costs = sections.Sum(s => s.Cost);
+        var net = revenue - costs;
+
+        if (quote.ProfitSummary != null)
+        {
+            quote.ProfitSummary.TotalRevenue = revenue;
+            quote.ProfitSummary.TotalCost = costs;
+            quote.ProfitSummary.TotalExpenses = 0;
+            quote.ProfitSummary.NetProfit = net;
+            quote.ProfitSummary.ProfitMargin = revenue > 0 ? (net / revenue * 100) : 0;
+        }
+        else
+        {
+            _context.ProfitSummaries.Add(new ProfitSummary
+            {
+                QuoteId = quote.Id,
+                TotalRevenue = revenue,
+                TotalCost = costs,
+                TotalExpenses = 0,
+                NetProfit = net,
+                ProfitMargin = revenue > 0 ? (net / revenue * 100) : 0
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        TempData["Success"] = form.IsDraft ? "Draft saved." : "Quote updated.";
+        return RedirectToAction(nameof(Details), new { id = quote.Id });
     }
 
     [HttpPost, ValidateAntiForgeryToken]
@@ -323,11 +545,6 @@ public class QuotesController : Controller
 
         if (quote == null) return NotFound();
 
-        // Load line items separately
-        var lineItems = await _context.QuoteLineItems
-            .Where(li => li.QuoteId == id)
-            .ToListAsync();
-
         int count = await _context.Invoices.CountAsync();
         var invoice = new Invoice
         {
@@ -339,8 +556,34 @@ public class QuotesController : Controller
             Total = quote.Total,
             Status = InvoiceStatus.Draft,
             DateIssued = DateTime.Now,
-            DueDate = DateTime.Now.AddDays(30),
-            LineItems = lineItems
+            DueDate = DateTime.Now.AddDays(30)
+        };
+
+        if (quote.QuoteType == QuoteType.FreeText)
+        {
+            var sections = await _context.FreeTextQuoteSections
+                .Where(s => s.QuoteId == id)
+                .OrderBy(s => s.SortOrder)
+                .ToListAsync();
+
+            invoice.LineItems = sections.Select(s => new InvoiceLineItem
+            {
+                ProductName = s.CategoryName,
+                ProductDescription = s.DescriptionHtml,
+                UnitPrice = s.Qty * s.UnitPrice,
+                CostPrice = s.Cost,
+                Quantity = 1,
+                IsRental = false,
+                ItemType = LineItemType.Custom
+            }).ToList();
+        }
+        else
+        {
+            var lineItems = await _context.QuoteLineItems
+                .Where(li => li.QuoteId == id)
+                .ToListAsync();
+
+            invoice.LineItems = lineItems
                 .Where(li => !li.IsExpense)
                 .Select(li => new InvoiceLineItem
                 {
@@ -353,8 +596,8 @@ public class QuotesController : Controller
                     Quantity = li.Quantity,
                     IsRental = li.IsRental,
                     ItemType = li.ItemType
-                }).ToList()
-        };
+                }).ToList();
+        }
 
         quote.Status = QuoteStatus.Converted;
         if (quote.Event != null) quote.Event.Status = EventStatus.Confirmed;
@@ -378,16 +621,11 @@ public class QuotesController : Controller
 
         if (source == null) return NotFound();
 
-        // Load line items separately with no tracking
-        var sourceLineItems = await _context.QuoteLineItems
-            .AsNoTracking()
-            .Where(li => li.QuoteId == id)
-            .ToListAsync();
-
         var newQuote = new Quote
         {
             ClientId = source.ClientId,
             Discount = source.Discount,
+            QuoteType = source.QuoteType,
             Status = QuoteStatus.Draft,
             DateIssued = DateTime.Now,
             DueDate = DateTime.Now.AddDays(30),
@@ -415,23 +653,53 @@ public class QuotesController : Controller
             });
         }
 
-        foreach (var li in sourceLineItems)
+        if (source.QuoteType == QuoteType.FreeText)
         {
-            _context.QuoteLineItems.Add(new QuoteLineItem
+            var sourceSections = await _context.FreeTextQuoteSections
+                .AsNoTracking()
+                .Where(s => s.QuoteId == id)
+                .OrderBy(s => s.SortOrder)
+                .ToListAsync();
+
+            foreach (var s in sourceSections)
             {
-                QuoteId = newQuote.Id,
-                CategoryId = li.CategoryId,
-                ProductTypeId = li.ProductTypeId,
-                PackageId = li.PackageId,
-                ProductName = li.ProductName,
-                ProductDescription = li.ProductDescription,
-                UnitPrice = li.UnitPrice,
-                CostPrice = li.CostPrice,
-                Quantity = li.Quantity,
-                IsRental = li.IsRental,
-                IsExpense = li.IsExpense,
-                ItemType = li.ItemType
-            });
+                _context.FreeTextQuoteSections.Add(new FreeTextQuoteSection
+                {
+                    QuoteId = newQuote.Id,
+                    CategoryName = s.CategoryName,
+                    DescriptionHtml = s.DescriptionHtml,
+                    Qty = s.Qty,
+                    UnitPrice = s.UnitPrice,
+                    Cost = s.Cost,
+                    SortOrder = s.SortOrder
+                });
+            }
+        }
+        else
+        {
+            var sourceLineItems = await _context.QuoteLineItems
+                .AsNoTracking()
+                .Where(li => li.QuoteId == id)
+                .ToListAsync();
+
+            foreach (var li in sourceLineItems)
+            {
+                _context.QuoteLineItems.Add(new QuoteLineItem
+                {
+                    QuoteId = newQuote.Id,
+                    CategoryId = li.CategoryId,
+                    ProductTypeId = li.ProductTypeId,
+                    PackageId = li.PackageId,
+                    ProductName = li.ProductName,
+                    ProductDescription = li.ProductDescription,
+                    UnitPrice = li.UnitPrice,
+                    CostPrice = li.CostPrice,
+                    Quantity = li.Quantity,
+                    IsRental = li.IsRental,
+                    IsExpense = li.IsExpense,
+                    ItemType = li.ItemType
+                });
+            }
         }
 
         if (source.ProfitSummary != null)
@@ -450,7 +718,8 @@ public class QuotesController : Controller
         await _context.SaveChangesAsync();
 
         TempData["Success"] = "Quote duplicated as draft. Update the details and save.";
-        return RedirectToAction(nameof(Edit), new { id = newQuote.Id });
+        var editAction = newQuote.QuoteType == QuoteType.FreeText ? nameof(EditFreeText) : nameof(Edit);
+        return RedirectToAction(editAction, new { id = newQuote.Id });
     }
 
     [HttpGet]
@@ -472,20 +741,20 @@ public class QuotesController : Controller
         if (quote.Event != null)
         {
             canDelete = false;
-            reasons.Add("• An event is associated with this quote");
+            reasons.Add("ï¿½ An event is associated with this quote");
         }
 
         if (quote.Invoice != null)
         {
             canDelete = false;
-            reasons.Add("• An invoice has been created from this quote");
+            reasons.Add("ï¿½ An invoice has been created from this quote");
         }
 
         // Add more conditions if needed
         if (quote.Status == QuoteStatus.Converted)
         {
             canDelete = false;
-            reasons.Add("• This quote has been converted to an invoice");
+            reasons.Add("ï¿½ This quote has been converted to an invoice");
         }
 
         return Json(new
@@ -554,13 +823,37 @@ public class QuotesController : Controller
                 .ThenInclude(g => g.ProductType)
             .ToListAsync();
 
+        if (quote.QuoteType == QuoteType.FreeText)
+        {
+            quote.FreeTextSections = await _context.FreeTextQuoteSections
+                .Where(s => s.QuoteId == id)
+                .OrderBy(s => s.SortOrder)
+                .ToListAsync();
+        }
+        else
+        {
+            quote.LineItems = await _context.QuoteLineItems
+                .Where(li => li.QuoteId == id)
+                .Include(li => li.Category)
+                .Include(li => li.ProductType)
+                .Include(li => li.Package)
+                    .ThenInclude(p => p.PackageItems)
+                    .ThenInclude(pi => pi.Gear)
+                    .ThenInclude(g => g.ProductType)
+                .ToListAsync();
+        }
+
         var viewBag = new Dictionary<string, object?>
         {
             ["LogoBase64"] = _pdfService.GetLogoBase64(),
             ["BankLogoBase64"] = _pdfService.GetBankLogoBase64()
         };
 
-        var html = await _viewRenderer.RenderViewToStringAsync("~/Views/Pdf/QuotePdf.cshtml", quote, viewBag);
+        var viewName = quote.QuoteType == QuoteType.FreeText
+            ? "~/Views/Pdf/FreeTextQuotePdf.cshtml"
+            : "~/Views/Pdf/QuotePdf.cshtml";
+
+        var html = await _viewRenderer.RenderViewToStringAsync(viewName, quote, viewBag);
         var pdf = await _pdfService.GeneratePdfFromHtmlAsync(html);
         var fileName = $"{quote.QuoteNumber ?? "Draft"} - {quote.Client?.FullName}.pdf";
         return File(pdf, "application/pdf", fileName);
@@ -644,4 +937,26 @@ public class QuoteLineItemDto
     public decimal? CostPrice { get; set; }
     public int Quantity { get; set; } = 1;
     public string ItemType { get; set; } = "Gear";
+}
+
+public class FreeTextQuoteFormModel
+{
+    public int ClientId { get; set; }
+    public decimal Discount { get; set; }
+    public bool IsDraft { get; set; }
+    public string? EventName { get; set; }
+    public DateTime? EventDate { get; set; }
+    public string? Venue { get; set; }
+    public TimeSpan? StartTime { get; set; }
+    public TimeSpan? EndTime { get; set; }
+    public string? SectionsJson { get; set; }
+}
+
+public class FreeTextSectionDto
+{
+    public string CategoryName { get; set; } = string.Empty;
+    public string? DescriptionHtml { get; set; }
+    public decimal Qty { get; set; } = 1;
+    public decimal UnitPrice { get; set; }
+    public decimal Cost { get; set; }
 }

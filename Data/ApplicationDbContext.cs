@@ -24,6 +24,7 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<PackageItem> PackageItems { get; set; }
     public DbSet<Quote> Quotes { get; set; }
     public DbSet<QuoteLineItem> QuoteLineItems { get; set; }
+    public DbSet<FreeTextQuoteSection> FreeTextQuoteSections { get; set; }
     public DbSet<ProfitSummary> ProfitSummaries { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceLineItem> InvoiceLineItems { get; set; }
@@ -153,6 +154,20 @@ public class ApplicationDbContext : IdentityDbContext
              .WithMany(x => x.PackageItems)
              .HasForeignKey(x => x.GearId)
              .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // FreeTextQuoteSection
+        builder.Entity<FreeTextQuoteSection>(e =>
+        {
+            e.Property(x => x.CategoryName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Qty).HasColumnType("decimal(18,2)");
+            e.Property(x => x.UnitPrice).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Cost).HasColumnType("decimal(18,2)");
+
+            e.HasOne(x => x.Quote)
+             .WithMany(x => x.FreeTextSections)
+             .HasForeignKey(x => x.QuoteId)
+             .OnDelete(DeleteBehavior.Cascade);
         });
 
         // Quote
