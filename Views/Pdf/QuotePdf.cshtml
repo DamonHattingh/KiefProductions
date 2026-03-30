@@ -10,7 +10,7 @@
     <title>Quote - @Model.QuoteNumber</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI';
             font-size: 10px;
             color: #333;
             margin: 0;
@@ -61,7 +61,7 @@
             padding: 15px;
             background-color: #f9f9f9;
             border-radius: 6px;
-            border-left: 4px solid black;
+            border-left: 4px solid #555;
         }
 
         .info-row {
@@ -106,7 +106,7 @@
         }
 
         .category-header {
-            background-color: gray;
+            background-color: #555;
             color: #fff;
             font-weight: 700;
             padding: 8px 8px;
@@ -150,7 +150,7 @@
             page-break-inside: avoid;
             page-break-before: auto;
             display: block;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
             .quote-terms h3 {
@@ -206,6 +206,10 @@
             .summary .total {
                 border-top: 2px solid #000;
             }
+        }
+
+        .page-footer {
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -396,16 +400,38 @@
         </div>
 
         <!-- Terms -->
-        <div class="quote-terms">
-            <h3>Quote Terms &amp; Conditions</h3>
-            <p>• This quotation is valid for 30 days from the date of issue</p>
-            <p>• Pricing is based on the scope of services and may change if requirements are adjusted</p>
-            <p>• All bookings are subject to availability of crew, equipment, and venues</p>
-            <p>• A deposit may be required to confirm booking, with the balance due prior to the event/project</p>
-            <p>• Travel, accommodation, and additional expenses (if applicable) will be billed separately unless otherwise agreed</p>
-            <p>• Final deliverables (photos, videos, audio, etc.) will be provided within the agreed timeline after the event/project</p>
-            <p>• Any changes to the project scope or schedule may result in revised pricing</p>
-            <p>• For questions, changes, or to confirm this quote, please contact us at info@kiefproductions.co.za | 079 051 9451</p>
+        <div class="page-footer">
+            <!-- Banking Details -->
+            <div style="background:#f5f5f5;padding:20px;border-radius:5px;display:flex;justify-content:space-between;align-items:center;font-size:9px;max-width:320px;margin-top:30px;margin-bottom:10px;">
+                <div style="flex:0 0 auto;">
+                    @if (!string.IsNullOrEmpty(ViewBag.BankLogoBase64 as string))
+                    {
+                        <img src="@ViewBag.BankLogoBase64" alt="Bank Logo" style="height:70px;" />
+                    }
+                </div>
+                <div style="flex:1;text-align:left;padding-left:20px;">
+                    <h4 style="margin:0 0 10px 0;color:#333;">Banking Details</h4>
+                    <p style="margin:4px 0;"><strong>Bank:</strong> FNB/RMB</p>
+                    <p style="margin:4px 0;"><strong>Account Name:</strong> Kief Klank Productions (Pty) Ltd.</p>
+                    <p style="margin:4px 0;"><strong>Account Type:</strong> Business Gold Account</p>
+                    <p style="margin:4px 0;"><strong>Account Number:</strong> 63139381478</p>
+                    <p style="margin:4px 0;"><strong>Branch Code:</strong> 250655</p>
+                    <p style="margin:4px 0;"><strong>Reference:</strong> @Model.QuoteNumber?</p>
+                </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="quote-terms">
+                <h3>Quote Terms &amp; Conditions</h3>
+                <p>• This quotation is valid for 30 days from the date of issue</p>
+                <p>• Pricing is based on the scope of services and may change if requirements are adjusted</p>
+                <p>• All bookings are subject to availability of crew, equipment, and venues</p>
+                <p>• A deposit may be required to confirm booking, with the balance due prior to the event/project</p>
+                <p>• Travel, accommodation, and additional expenses (if applicable) will be billed separately unless otherwise agreed</p>
+                <p>• Final deliverables (photos, videos, audio, etc.) will be provided within the agreed timeline after the event/project</p>
+                <p>• Any changes to the project scope or schedule may result in revised pricing</p>
+                <p>• For questions, changes, or to confirm this quote, please contact us at info@kiefproductions.co.za | 079 051 9451</p>
+            </div>
         </div>
 
     </div>

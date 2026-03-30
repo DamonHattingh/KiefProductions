@@ -354,8 +354,8 @@
                         });
 
                         if (initialHtml) {
-                            quill.root.innerHTML = initialHtml;
-                            console.log('Set initial HTML for id:', id);
+        quill.clipboard.dangerouslyPasteHTML(initialHtml);
+                                    console.log('Set initial HTML for id:', id);
                         }
 
                         quill.on('text-change', () => {
@@ -404,17 +404,44 @@
                     console.log('Recalc - Subtotal:', this.subtotal, 'Total:', this.total);
                 },
 
-                buildSections() {
-                    const builtSections = this.sections.map((s, idx) => ({
-                        categoryName: s.categoryName || 'Section ' + (idx + 1),
-                        descriptionHtml: s.descriptionHtml || '',
-                        qty: parseFloat(s.qty) || 0,
-                        unitPrice: parseFloat(s.unitPrice) || 0,
-                        cost: parseFloat(s.cost) || 0
-                    }));
-                    console.log('Building sections for save:', builtSections.length, 'sections');
-                    return builtSections;
-                },
+                        buildSections() {
+            function normalizeQuillLists(html) {
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                temp.querySelectorAll('ol').forEach(ol => {
+                    let currentList = null;
+                    let currentType = null;
+
+                    Array.from(ol.children).forEach(li => {
+                        const type = li.getAttribute('data-list');
+                        const tag = type === 'bullet' ? 'ul' : 'ol';
+
+                        if (currentType !== tag) {
+                            currentList = document.createElement(tag);
+                            ol.parentNode.insertBefore(currentList, ol);
+                            currentType = tag;
+                        }
+
+                        const newLi = document.createElement('li');
+                        newLi.innerHTML = li.innerHTML;
+                        currentList.appendChild(newLi);
+                    });
+
+                    ol.remove();
+                });
+
+                return temp.innerHTML;
+            }
+
+            return this.sections.map((s, idx) => ({
+                categoryName: s.categoryName || 'Section ' + (idx + 1),
+                descriptionHtml: normalizeQuillLists(s.descriptionHtml || ''),
+                qty: parseFloat(s.qty) || 0,
+                unitPrice: parseFloat(s.unitPrice) || 0,
+                cost: parseFloat(s.cost) || 0
+            }));
+        },
 
                 saveDraft() {
                     const sectionsJson = JSON.stringify(this.buildSections());

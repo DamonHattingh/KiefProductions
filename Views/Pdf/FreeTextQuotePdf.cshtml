@@ -9,8 +9,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quote - @Model.QuoteNumber</title>
     <style>
+
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 10px;
             color: #333;
             margin: 0;
@@ -40,14 +41,14 @@
         .quote-info-row { display: flex; margin-bottom: 6px; text-align: left; justify-content: space-between; }
         .quote-label { font-weight: 600; min-width: 80px; }
 
-        .info-section { display: flex; gap: 30px; margin-bottom: 20px; }
+        .info-section { display: flex; gap: 30px; margin-bottom: 10px; }
 
         .client-info, .event-info {
             flex: 1;
             padding: 15px;
             background-color: #f9f9f9;
             border-radius: 6px;
-            border-left: 4px solid black;
+            border-left: 4px solid #555;
         }
 
         .info-row { display: flex; margin-bottom: 4px; }
@@ -128,10 +129,10 @@
         .quote-terms {
             padding: 20px;
             background-color: #f9f9f9;
-            border-left: 4px solid #393B42;
+            border-left: 4px solid #555;
             border-radius: 6px;
             page-break-inside: avoid;
-            margin-top: 20px;
+            /* margin-top: 20px; */
         }
 
         .quote-terms h3 { margin-top: 0; color: #393B42; font-size: 12px; margin-bottom: 15px; }
@@ -140,6 +141,62 @@
         @@media print {
             body { padding: 0; }
             .summary .total { border-top: 2px solid #000; }
+        }
+
+        table {
+            width: 99.5%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            margin: 0 auto;
+        }
+
+        table, th, td {
+            box-sizing: border-box;
+        }
+
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        tr td:first-child:not(.category-header) {
+            border-left: 1px solid lightgray;
+        }
+
+        tr td:last-child:not(.category-header) {
+            border-right: 1px solid lightgray;
+        }
+
+        th {
+            font-weight: 600;
+            padding: 10px 8px;
+            text-align: left;
+        }
+
+        .category-header {
+            background-color: #555;
+            color: #fff;
+            font-weight: 700;
+            padding: 8px 8px;
+            border-bottom: 0px;
+            border-width: 0px 1px 0px 1px;
+            border-style: solid;
+            border-color: gray;
+        }
+
+        ul{
+            margin-block-start: 5px;
+            margin-block-end: 5px;
+        }
+
+        p{
+            margin-block-start: 5px;
+            margin-block-end: 5px;
+        }
+
+        .page-footer {
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -212,8 +269,42 @@
             }
         </div>
 
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: start;">Item</th>
+                    <th style="text-align: center;">Price</th>
+                    <th style="text-align: center;">Qty</th>
+                    <th style="text-align: center;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var sec in Model.FreeTextSections.OrderBy(s => s.SortOrder))
+                {
+                    <tr >
+                        <td class="category-header" colspan="4">
+                            <span>@sec.CategoryName</span>
+                        </td>
+                    </tr>
+
+                    <tr>
+
+                        <td>
+                            @if (!string.IsNullOrEmpty(sec.DescriptionHtml))
+                            {
+                                <div>@Html.Raw(sec.DescriptionHtml)</div>
+                            }
+                        </td>
+                        <td style="text-align: center;">R @sec.UnitPrice.ToString("N2")</td>
+                        <td style="text-align: center;">@sec.Qty.ToString("0")</td>
+                        <td style="text-align: center;">R @((sec.Qty * sec.UnitPrice).ToString("N2"))</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
         <!-- Sections -->
-        @foreach (var sec in Model.FreeTextSections.OrderBy(s => s.SortOrder))
+        @* @foreach (var sec in Model.FreeTextSections.OrderBy(s => s.SortOrder))
         {
             <div class="section-block">
                 <div class="section-header">
@@ -230,9 +321,9 @@
                     <span class="meta">Qty: @sec.Qty.ToString("G")</span>
                     <span class="meta">Unit Price: R @sec.UnitPrice.ToString("N2")</span>
                     <span class="total">Total: R @((sec.Qty * sec.UnitPrice).ToString("N2"))</span>
-                </div>
+                </div> 
             </div>
-        }
+        } *@
 
         <!-- Totals -->
         <div class="summary">
@@ -244,17 +335,38 @@
             <p class="total"><span>Total Amount:</span><span>@Model.Total.ToString("C")</span></p>
         </div>
 
-        <!-- Terms -->
-        <div class="quote-terms">
-            <h3>Quote Terms &amp; Conditions</h3>
-            <p>• This quotation is valid for 30 days from the date of issue</p>
-            <p>• Pricing is based on the scope of services and may change if requirements are adjusted</p>
-            <p>• All bookings are subject to availability of crew, equipment, and venues</p>
-            <p>• A deposit may be required to confirm booking, with the balance due prior to the event/project</p>
-            <p>• Travel, accommodation, and additional expenses (if applicable) will be billed separately unless otherwise agreed</p>
-            <p>• Final deliverables (photos, videos, audio, etc.) will be provided within the agreed timeline after the event/project</p>
-            <p>• Any changes to the project scope or schedule may result in revised pricing</p>
-            <p>• For questions, changes, or to confirm this quote, please contact us at info@kiefproductions.co.za | 079 051 9451</p>
+        <div class="page-footer">
+            <!-- Banking Details -->
+            <div style="background:#f5f5f5;padding:20px;border-radius:5px;display:flex;justify-content:space-between;align-items:center;font-size:9px;max-width:320px;margin-top:30px;margin-bottom:10px;">
+                <div style="flex:0 0 auto;">
+                    @if (!string.IsNullOrEmpty(ViewBag.BankLogoBase64 as string))
+                    {
+                        <img src="@ViewBag.BankLogoBase64" alt="Bank Logo" style="height:70px;" />
+                    }
+                </div>
+                <div style="flex:1;text-align:left;padding-left:20px;">
+                    <h4 style="margin:0 0 10px 0;color:#333;">Banking Details</h4>
+                    <p style="margin:4px 0;"><strong>Bank:</strong> FNB/RMB</p>
+                    <p style="margin:4px 0;"><strong>Account Name:</strong> Kief Klank Productions (Pty) Ltd.</p>
+                    <p style="margin:4px 0;"><strong>Account Type:</strong> Business Gold Account</p>
+                    <p style="margin:4px 0;"><strong>Account Number:</strong> 63139381478</p>
+                    <p style="margin:4px 0;"><strong>Branch Code:</strong> 250655</p>
+                    <p style="margin:4px 0;"><strong>Reference:</strong> @Model.QuoteNumber?</p>
+                </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="quote-terms">
+                <h3>Quote Terms &amp; Conditions</h3>
+                <p>• This quotation is valid for 30 days from the date of issue</p>
+                <p>• Pricing is based on the scope of services and may change if requirements are adjusted</p>
+                <p>• All bookings are subject to availability of crew, equipment, and venues</p>
+                <p>• A deposit may be required to confirm booking, with the balance due prior to the event/project</p>
+                <p>• Travel, accommodation, and additional expenses (if applicable) will be billed separately unless otherwise agreed</p>
+                <p>• Final deliverables (photos, videos, audio, etc.) will be provided within the agreed timeline after the event/project</p>
+                <p>• Any changes to the project scope or schedule may result in revised pricing</p>
+                <p>• For questions, changes, or to confirm this quote, please contact us at info@kiefproductions.co.za | 079 051 9451</p>
+            </div>
         </div>
 
     </div>

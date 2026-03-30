@@ -911,6 +911,46 @@ public class QuotesController : Controller
     {
         ViewBag.Clients = await _context.Clients.Where(c => c.IsActive).OrderBy(c => c.FullName).ToListAsync();
     }
+
+    [HttpGet]
+    public async Task<IActionResult> PreviewPdf(int id)
+    {
+        var quote = await _context.Quotes
+            .Include(q => q.Client)
+            .Include(q => q.Event)
+            .FirstOrDefaultAsync(q => q.Id == id);
+
+        if (quote == null) return NotFound();
+
+        if (quote.QuoteType == QuoteType.FreeText)
+        {
+            quote.FreeTextSections = await _context.FreeTextQuoteSections
+                .Where(s => s.QuoteId == id)
+                .OrderBy(s => s.SortOrder)
+                .ToListAsync();
+        }
+        else
+        {
+            quote.LineItems = await _context.QuoteLineItems
+                .Where(li => li.QuoteId == id)
+                .Include(li => li.Category)
+                .Include(li => li.ProductType)
+                .Include(li => li.Package)
+                    .ThenInclude(p => p.PackageItems)
+                    .ThenInclude(pi => pi.Gear)
+                    .ThenInclude(g => g.ProductType)
+                .ToListAsync();
+        }
+
+        ViewBag.LogoBase64 = _pdfService.GetLogoBase64();
+        ViewBag.BankLogoBase64 = _pdfService.GetBankLogoBase64();
+
+        var viewName = quote.QuoteType == QuoteType.FreeText
+            ? "~/Views/Pdf/FreeTextQuotePdf.cshtml"
+            : "~/Views/Pdf/QuotePdf.cshtml";
+
+        return View(viewName, quote);
+    }
 }
 
 public class QuoteFormModel

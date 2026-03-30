@@ -136,12 +136,13 @@ public class InvoicesController : Controller
     public async Task<IActionResult> GeneratePdf(int id)
     {
         var invoice = await _context.Invoices
-            .Include(i => i.Client)
-            .Include(i => i.Quote).ThenInclude(q => q.Event)
-            .Include(i => i.LineItems).ThenInclude(li => li.Category)
-            .Include(i => i.LineItems).ThenInclude(li => li.ProductType)
-            .Include(i => i.Payments)
-            .FirstOrDefaultAsync(i => i.Id == id);
+    .Include(i => i.Client)
+    .Include(i => i.Quote).ThenInclude(q => q.Event)
+    .Include(i => i.Quote).ThenInclude(q => q.FreeTextSections) // ?? add this
+    .Include(i => i.LineItems).ThenInclude(li => li.Category)
+    .Include(i => i.LineItems).ThenInclude(li => li.ProductType)
+    .Include(i => i.Payments)
+    .FirstOrDefaultAsync(i => i.Id == id);
 
         if (invoice == null) return NotFound();
 
