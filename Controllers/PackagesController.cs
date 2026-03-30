@@ -87,7 +87,7 @@ public class PackagesController : Controller
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, Package package)
+    public async Task<IActionResult> Edit(int id, Package package, List<int>? gearIds, List<int>? gearQuantities, List<string>? customDescriptions)
     {
         if (id != package.Id) return NotFound();
         ModelState.Remove("PackageItems");
@@ -103,6 +103,32 @@ public class PackagesController : Controller
         existing.Name = package.Name;
         existing.BasePrice = package.BasePrice;
         existing.IsActive = package.IsActive;
+
+        // Add any new gear items
+        if (gearIds != null)
+        {
+            for (int i = 0; i < gearIds.Count; i++)
+            {
+                if (gearIds[i] > 0)
+                {
+                    _context.PackageItems.Add(new PackageItem
+                    {
+                        PackageId = id,
+                        GearId = gearIds[i],
+                        Quantity = gearQuantities != null && i < gearQuantities.Count ? gearQuantities[i] : 1
+                    });
+                }
+            }
+        }
+
+        // Add any new custom items
+        if (customDescriptions != null)
+        {
+            foreach (var desc in customDescriptions.Where(d => !string.IsNullOrWhiteSpace(d)))
+            {
+                _context.PackageItems.Add(new PackageItem { PackageId = id, CustomDescription = desc, Quantity = 1 });
+            }
+        }
 
         await _context.SaveChangesAsync();
         TempData["Success"] = "Package updated.";
