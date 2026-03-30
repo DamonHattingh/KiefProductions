@@ -10,7 +10,7 @@
 <div class="page-header">
     <div class="page-header-left">
         <h1>@Model.EventName</h1>
-        <p>@Model.EventDate.ToString("dddd, dd MMMM yyyy") @(Model.Venue != null ? $"· {Model.Venue}" : "")</p>
+        <p>@(Model.EventEndDate.HasValue ? $"{Model.EventDate:dd MMMM yyyy} – {Model.EventEndDate:dd MMMM yyyy}" : Model.EventDate.ToString("dddd, dd MMMM yyyy")) @(Model.Venue != null ? $"· {Model.Venue}" : "")</p>
     </div>
     <div class="d-flex gap-2">
         <a href="/Events/Edit/@Model.Id" class="btn btn-secondary">Edit</a>

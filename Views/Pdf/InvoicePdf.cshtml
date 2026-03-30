@@ -249,7 +249,7 @@
             <div class="event-info">
                 <h5 style="color:black;margin-bottom:10px;font-weight:550;font-size:17px;margin-top:0;">Event Information</h5>
                 <div class="info-row"><span class="info-label">Name:</span><span>@Model.Quote.Event.EventName</span></div>
-                <div class="info-row"><span class="info-label">Date:</span><span>@Model.Quote.Event.EventDate.ToString("yyyy/MM/dd")</span></div>
+                <div class="info-row"><span class="info-label">Date:</span><span>@(Model.Quote.Event.EventEndDate.HasValue ? $"{Model.Quote.Event.EventDate:yyyy/MM/dd} – {Model.Quote.Event.EventEndDate:yyyy/MM/dd}" : Model.Quote.Event.EventDate.ToString("yyyy/MM/dd"))</span></div>
                 <div class="info-row"><span class="info-label">Venue:</span><span>@(string.IsNullOrEmpty(Model.Quote.Event.Venue) ? "To Be Confirmed" : Model.Quote.Event.Venue)</span></div>
                 <div class="info-row">
                     <span class="info-label">Schedule:</span>

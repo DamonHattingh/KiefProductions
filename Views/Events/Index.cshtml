@@ -59,7 +59,7 @@
                             <td>
                                 <a href="/Events/Details/@ev.Id" style="color:var(--text-primary);text-decoration:none;font-weight:500;">@ev.EventName</a>
                             </td>
-                            <td class="muted">@ev.EventDate.ToString("dd MMM yyyy")</td>
+                            <td class="muted">@(ev.EventEndDate.HasValue ? $"{ev.EventDate:dd MMM yyyy} – {ev.EventEndDate:dd MMM yyyy}" : ev.EventDate.ToString("dd MMM yyyy"))</td>
                             <td class="muted">@(ev.Venue ?? "—")</td>
                             <td class="muted">@(ev.Quote?.Client?.FullName ?? "—")</td>
                             <td><span class="badge badge-@ev.Status.ToString().ToLower()">@ev.Status</span></td>

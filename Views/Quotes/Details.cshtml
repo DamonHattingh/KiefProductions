@@ -71,7 +71,7 @@
                     <div>
                         <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:10px;">Event</div>
                         <div class="detail-row"><span class="detail-label">Name</span><span class="detail-value">@Model.Event.EventName</span></div>
-                        <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">@Model.Event.EventDate.ToString("dd MMM yyyy")</span></div>
+                        <div class="detail-row"><span class="detail-label">Date</span><span class="detail-value">@(Model.Event.EventEndDate.HasValue ? $"{Model.Event.EventDate:dd MMM yyyy} – {Model.Event.EventEndDate:dd MMM yyyy}" : Model.Event.EventDate.ToString("dd MMM yyyy"))</span></div>
                         <div class="detail-row"><span class="detail-label">Venue</span><span class="detail-value">@(Model.Event.Venue ?? "TBC")</span></div>
                         @if (Model.Event.StartTime.HasValue)
                         {

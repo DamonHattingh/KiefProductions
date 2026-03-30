@@ -134,6 +134,7 @@ public class QuotesController : Controller
             {
                 EventName = form.EventName,
                 EventDate = form.EventDate ?? DateTime.Today,
+                EventEndDate = form.EventEndDate,
                 Venue = form.Venue,
                 StartTime = form.StartTime,
                 EndTime = form.EndTime,
@@ -222,6 +223,7 @@ public class QuotesController : Controller
             {
                 quote.Event.EventName = form.EventName;
                 quote.Event.EventDate = form.EventDate ?? DateTime.Today;
+                quote.Event.EventEndDate = form.EventEndDate;
                 quote.Event.Venue = form.Venue;
                 quote.Event.StartTime = form.StartTime;
                 quote.Event.EndTime = form.EndTime;
@@ -232,6 +234,7 @@ public class QuotesController : Controller
                 {
                     EventName = form.EventName,
                     EventDate = form.EventDate ?? DateTime.Today,
+                    EventEndDate = form.EventEndDate,
                     Venue = form.Venue,
                     StartTime = form.StartTime,
                     EndTime = form.EndTime,
@@ -336,6 +339,7 @@ public class QuotesController : Controller
             {
                 EventName = form.EventName,
                 EventDate = form.EventDate ?? DateTime.Today,
+                EventEndDate = form.EventEndDate,
                 Venue = form.Venue,
                 StartTime = form.StartTime,
                 EndTime = form.EndTime,
@@ -439,6 +443,7 @@ public class QuotesController : Controller
             {
                 quote.Event.EventName = form.EventName;
                 quote.Event.EventDate = form.EventDate ?? DateTime.Today;
+                quote.Event.EventEndDate = form.EventEndDate;
                 quote.Event.Venue = form.Venue;
                 quote.Event.StartTime = form.StartTime;
                 quote.Event.EndTime = form.EndTime;
@@ -449,6 +454,7 @@ public class QuotesController : Controller
                 {
                     EventName = form.EventName,
                     EventDate = form.EventDate ?? DateTime.Today,
+                    EventEndDate = form.EventEndDate,
                     Venue = form.Venue,
                     StartTime = form.StartTime,
                     EndTime = form.EndTime,
@@ -960,6 +966,7 @@ public class QuoteFormModel
     public bool IsDraft { get; set; }
     public string? EventName { get; set; }
     public DateTime? EventDate { get; set; }
+    public DateTime? EventEndDate { get; set; }
     public string? Venue { get; set; }
     public TimeSpan? StartTime { get; set; }
     public TimeSpan? EndTime { get; set; }
@@ -986,6 +993,7 @@ public class FreeTextQuoteFormModel
     public bool IsDraft { get; set; }
     public string? EventName { get; set; }
     public DateTime? EventDate { get; set; }
+    public DateTime? EventEndDate { get; set; }
     public string? Venue { get; set; }
     public TimeSpan? StartTime { get; set; }
     public TimeSpan? EndTime { get; set; }
