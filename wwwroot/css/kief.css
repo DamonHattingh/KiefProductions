@@ -116,6 +116,7 @@ body {
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     text-decoration: none;
 }
