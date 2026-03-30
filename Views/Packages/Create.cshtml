@@ -1,0 +1,145 @@
+@model KiefProductions.Models.Package
+@{ ViewData["Title"] = "New Package"; }
+
+<div class="breadcrumb">
+    <a href="/Packages">Packages</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    <span class="current">New Package</span>
+</div>
+
+<div style="max-width:760px;" x-data="packageBuilder()" x-init="init()">
+    <form asp-action="Create" method="post" id="packageForm" @onsubmit="prepareSubmit()">
+        @Html.AntiForgeryToken()
+
+        <!-- Package Details -->
+        <div class="card mb-3">
+            <div class="card-header"><h2>Package Details</h2></div>
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Package Name <span class="required">*</span></label>
+                        <input asp-for="Name" class="form-control" placeholder="e.g. Wedding Sound Package" />
+                        <span asp-validation-for="Name" class="form-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Base Price (R)</label>
+                        <input asp-for="BasePrice" type="number" step="0.01" min="0" class="form-control" placeholder="0.00" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input asp-for="IsActive" type="checkbox" style="width:15px;height:15px;accent-color:var(--accent);" />
+                        Active (available for use in quotes)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Items Builder -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h3>Package Items</h3>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" @@click="addGearItem()">+ Own Gear</button>
+                    <button type="button" class="btn btn-secondary btn-sm" @@click="addCustomItem()">+ Custom</button>
+                </div>
+            </div>
+
+            <template x-if="items.length === 0">
+                <div style="padding:30px;text-align:center;color:var(--text-muted);font-size:13px;">
+                    No items yet — add gear from your inventory or a custom description
+                </div>
+            </template>
+
+            <template x-for="(item, idx) in items" :key="idx">
+                <div style="display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);">
+
+                    <!-- Gear item -->
+                    <template x-if="item.type === 'gear'">
+                        <div style="display:flex;align-items:center;gap:10px;flex:1;">
+                            <span class="badge" style="background:var(--bg-hover);color:var(--text-secondary);white-space:nowrap;">Own Gear</span>
+                            <select x-model="item.gearId" class="form-select" style="flex:1;">
+                                <option value="">Select gear...</option>
+                                @foreach (var g in ViewBag.Gears as IEnumerable<KiefProductions.Models.Gear> ?? Enumerable.Empty<KiefProductions.Models.Gear>())
+                                {
+                                    <option value="@g.Id">@g.Name (@(g.ProductType?.Category?.Name ?? "") — @(g.ProductType?.Name ?? ""))</option>
+                                }
+                            </select>
+                        </div>
+                    </template>
+
+                    <!-- Custom item -->
+                    <template x-if="item.type === 'custom'">
+                        <div style="display:flex;align-items:center;gap:10px;flex:1;">
+                            <span class="badge" style="background:var(--blue-bg);color:var(--blue);white-space:nowrap;">Custom</span>
+                            <input type="text" x-model="item.description" class="form-control" placeholder="e.g. Travel & Accommodation" style="flex:1;" />
+                        </div>
+                    </template>
+
+                    <!-- Qty -->
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <label style="font-size:12px;color:var(--text-muted);white-space:nowrap;">Qty</label>
+                        <input type="number" x-model.number="item.quantity" min="1" class="form-control" style="width:70px;" />
+                    </div>
+
+                    <!-- Remove -->
+                    <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeItem(idx)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </template>
+
+            <!-- Hidden inputs built on submit -->
+            <div id="hiddenInputs"></div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Save Package</button>
+            <a href="/Packages" class="btn btn-ghost">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js" defer></script>
+    <script>
+        function packageBuilder() {
+            return {
+                items: [],
+
+                init() {},
+
+                addGearItem() {
+                    this.items.push({ type: 'gear', gearId: '', quantity: 1 });
+                },
+
+                addCustomItem() {
+                    this.items.push({ type: 'custom', description: '', quantity: 1 });
+                },
+
+                removeItem(idx) {
+                    this.items.splice(idx, 1);
+                },
+
+                prepareSubmit() {
+                    const container = document.getElementById('hiddenInputs');
+                    container.innerHTML = '';
+
+                    this.items.forEach((item, i) => {
+                        if (item.type === 'gear' && item.gearId) {
+                            container.innerHTML += `<input type="hidden" name="gearIds" value="${item.gearId}" />`;
+                            container.innerHTML += `<input type="hidden" name="gearQuantities" value="${item.quantity}" />`;
+                        } else if (item.type === 'custom' && item.description.trim()) {
+                            container.innerHTML += `<input type="hidden" name="customDescriptions" value="${item.description}" />`;
+                        }
+                    });
+                }
+            };
+        }
+
+        document.getElementById('packageForm').addEventListener('submit', function () {
+            Alpine.store; // ensure Alpine has run
+            document.querySelector('[x-data]').__x.$data.prepareSubmit();
+        });
+    </script>
+}
