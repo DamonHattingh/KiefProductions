@@ -1,83 +1,239 @@
-﻿@page
+@page
 @model LoginModel
-
 @{
-    ViewData["Title"] = "Log in";
+    Layout = null;
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — Kief Productions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/kief.css" asp-append-version="true" />
+    <style>
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-base);
+            padding: 24px;
+        }
 
-<h1>@ViewData["Title"]</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .login-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .login-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--accent);
+            color: var(--bg-base);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+
+        .login-logo-text .brand {
+            display: block;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-primary);
+            letter-spacing: 0.3px;
+        }
+
+        .login-logo-text .tagline {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        .login-heading {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .login-subheading {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        .login-card .form-group {
+            margin-bottom: 16px;
+        }
+
+        .login-card .form-label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .login-card .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .login-card .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .login-card .form-control::placeholder {
+            color: var(--text-muted);
+        }
+
+        .login-remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .login-remember input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .login-card .btn-primary {
+            width: 100%;
+            padding: 11px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 0.3px;
+        }
+
+        .login-links {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .login-links a {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .login-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .validation-error {
+            background: var(--red-bg);
+            border: 1px solid var(--red);
+            border-radius: var(--radius-md);
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--red);
+            margin-bottom: 20px;
+        }
+
+        .field-error {
+            font-size: 12px;
+            color: var(--red);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-card">
+
+            <div class="login-logo">
+                <div class="login-logo-icon">KP</div>
+                <div class="login-logo-text">
+                    <span class="brand">KIEF Productions</span>
+                    <span class="tagline">Audio · Lights · Visuals</span>
+                </div>
+            </div>
+
+            <h1 class="login-heading">Welcome back</h1>
+            <p class="login-subheading">Sign in to your account to continue</p>
+
             <form id="account" method="post">
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label asp-for="Input.Email" class="form-label">Email</label>
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
-                </div>
-                <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label asp-for="Input.Password" class="form-label">Password</label>
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
-                <div class="checkbox mb-3">
-                    <label asp-for="Input.RememberMe" class="form-label">
-                        <input class="form-check-input" asp-for="Input.RememberMe" />
-                        @Html.DisplayNameFor(m => m.Input.RememberMe)
-                    </label>
-                </div>
-                <div>
-                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </form>
-        </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
+                @Html.AntiForgeryToken()
+
+                @if (Model.ModelState.ErrorCount > 0)
                 {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
+                    <div class="validation-error" role="alert">
+                        <div asp-validation-summary="ModelOnly"></div>
                     </div>
                 }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
-            }
-        </section>
-    </div>
-</div>
 
-@section Scripts {
+                <div class="form-group">
+                    <label asp-for="Input.Email" class="form-label">Email address</label>
+                    <input asp-for="Input.Email" class="form-control" autocomplete="username" placeholder="you@example.com" />
+                    <span asp-validation-for="Input.Email" class="field-error"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.Password" class="form-label">Password</label>
+                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" placeholder="••••••••" />
+                    <span asp-validation-for="Input.Password" class="field-error"></span>
+                </div>
+
+                <label class="login-remember">
+                    <input asp-for="Input.RememberMe" type="checkbox" />
+                    @Html.DisplayNameFor(m => m.Input.RememberMe)
+                </label>
+
+                <button id="login-submit" type="submit" class="btn btn-primary">Sign in</button>
+
+                <div class="login-links">
+                    <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
     <partial name="_ValidationScriptsPartial" />
-}
+</body>
+</html>
