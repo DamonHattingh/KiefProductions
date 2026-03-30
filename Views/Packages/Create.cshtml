@@ -8,7 +8,7 @@
 </div>
 
 <div style="max-width:760px;" x-data="packageBuilder()" x-init="init()">
-    <form asp-action="Create" method="post" id="packageForm" @onsubmit="prepareSubmit()">
+    <form asp-action="Create" method="post" id="packageForm">
         @Html.AntiForgeryToken()
 
         <!-- Package Details -->
@@ -94,7 +94,7 @@
         </div>
 
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Save Package</button>
+            <button type="submit" class="btn btn-primary" @@click="prepareSubmit()">Save Package</button>
             <a href="/Packages" class="btn btn-ghost">Cancel</a>
         </div>
     </form>
@@ -137,9 +137,5 @@
             };
         }
 
-        document.getElementById('packageForm').addEventListener('submit', function () {
-            Alpine.store; // ensure Alpine has run
-            document.querySelector('[x-data]').__x.$data.prepareSubmit();
-        });
     </script>
 }
