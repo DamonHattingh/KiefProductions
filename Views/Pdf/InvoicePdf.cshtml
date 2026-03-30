@@ -202,6 +202,14 @@
                 border-top: 2px solid #000;
             }
         }
+
+        tr.category-row {
+            page-break-after: avoid;
+        }
+
+        tr, td {
+            page-break-inside: avoid;
+        }
     </style>
 </head>
 <body>
@@ -212,7 +220,7 @@
             <h1>Invoice</h1>
             <div class="quote-info-row">
                 <span class="quote-label">Invoice #:</span>
-                <span>@Model.InvoiceNumber</span>
+                <span>INV-0130</span>
             </div>
             <div class="quote-info-row">
                 <span class="quote-label">Date Issued:</span>
@@ -220,7 +228,15 @@
             </div>
             <div class="quote-info-row">
                 <span class="quote-label">Due Date:</span>
-                <span>@Model.DueDate.ToString("yyyy/MM/dd")</span>
+                @if(Model.BalanceDue == 0)
+                {
+                    <span style="color: green">@Model.DueDate.ToString("yyyy/MM/dd") (Paid)</span>
+                }
+                else
+                {
+                    <span>@Model.DueDate.ToString("yyyy/MM/dd")</span>
+                }
+                
             </div>
         </div>
         <div class="logo">
@@ -241,6 +257,10 @@
             @if (!string.IsNullOrEmpty(Model.Client?.BusinessName))
             {
                 <div class="info-row"><span class="info-label">Business:</span><span>@Model.Client.BusinessName</span></div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Client?.Address))
+            {
+                <div class="info-row"><span class="info-label">Address:</span><span>@Model.Client.Address</span></div>
             }
         </div>
 
@@ -299,11 +319,12 @@
             {
                 foreach (var sec in Model.Quote.FreeTextSections.OrderBy(s => s.SortOrder))
                 {
-                    <tr>
+                    <tr class="category-row">
                         <td class="category-header" colspan="4">
                             <span>@sec.CategoryName</span>
                         </td>
                     </tr>
+
                     <tr>
                         <td>
                             @if (!string.IsNullOrEmpty(sec.DescriptionHtml))

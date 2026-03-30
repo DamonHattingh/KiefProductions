@@ -77,7 +77,7 @@ public class InvoicesController : Controller
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> RecordPayment(int invoiceId, decimal amount, string? method, string? notes, DateTime paymentDate)
+    public async Task<IActionResult> RecordPayment(int invoiceId, string amount, string? method, string? notes, DateTime paymentDate)
     {
         var invoice = await _context.Invoices
             .Include(i => i.Payments)
@@ -85,7 +85,9 @@ public class InvoicesController : Controller
 
         if (invoice == null) return NotFound();
 
-        if (amount <= 0)
+        var cleanAmount = amount?.Replace(" ", "").Replace(",", ".") ?? "0";
+        if (!decimal.TryParse(cleanAmount, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out var parsedAmount) || parsedAmount <= 0)
         {
             TempData["Error"] = "Payment amount must be greater than zero.";
             return RedirectToAction(nameof(Details), new { id = invoiceId });
@@ -94,13 +96,13 @@ public class InvoicesController : Controller
         _context.Payments.Add(new Payment
         {
             InvoiceId = invoiceId,
-            Amount = amount,
+            Amount = parsedAmount,
             Method = method,
             Notes = notes,
             PaymentDate = paymentDate == default ? DateTime.Now : paymentDate
         });
 
-        invoice.AmountPaid += amount;
+        invoice.AmountPaid += parsedAmount;
 
         if (invoice.AmountPaid >= invoice.Total)
             invoice.Status = InvoiceStatus.Paid;
@@ -108,7 +110,7 @@ public class InvoicesController : Controller
             invoice.Status = InvoiceStatus.PartiallyPaid;
 
         await _context.SaveChangesAsync();
-        TempData["Success"] = $"Payment of R {amount:N2} recorded.";
+        TempData["Success"] = $"Payment of R {parsedAmount:N2} recorded.";
         return RedirectToAction(nameof(Details), new { id = invoiceId });
     }
 

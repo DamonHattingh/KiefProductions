@@ -45,16 +45,19 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Event Date</label>
-                                <input name="EventDate" type="date" class="form-control" />
+                                <div class="d-flex gap-2">
+                                    <input name="EventDate" type="date" class="form-control" />
+                                    <input name="EventEndDate" type="date" class="form-control" />
+                                </div>
                             </div>
                         </div>
-                        <div class="form-row">
+                        @* <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">End Date <span style="color:var(--text-muted);font-weight:400;">(multi-day only)</span></label>
                                 <input name="EventEndDate" type="date" class="form-control" />
                             </div>
                             <div class="form-group"></div>
-                        </div>
+                        </div> *@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Venue</label>
