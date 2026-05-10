@@ -115,7 +115,7 @@ public class QuotesController : Controller
         if (!form.IsDraft)
         {
             int count = await _context.Quotes.CountAsync(q => q.Status != QuoteStatus.Draft);
-            quote.QuoteNumber = $"QUO-{(count + 100):0000}";
+            quote.QuoteNumber = $"QUO-{(count + 142):0000}";
         }
 
         var sections = string.IsNullOrEmpty(form.SectionsJson)
@@ -213,7 +213,7 @@ public class QuotesController : Controller
         if (!form.IsDraft && quote.Status == QuoteStatus.Draft)
         {
             int count = await _context.Quotes.CountAsync(q => q.Status != QuoteStatus.Draft && q.Id != id);
-            quote.QuoteNumber ??= $"QUO-{(count + 100):0000}";
+            quote.QuoteNumber ??= $"QUO-{(count + 142):0000}";
             quote.Status = QuoteStatus.Pending;
         }
 
@@ -320,7 +320,7 @@ public class QuotesController : Controller
         if (!form.IsDraft)
         {
             int count = await _context.Quotes.CountAsync(q => q.Status != QuoteStatus.Draft);
-            quote.QuoteNumber = $"QUO-{(count + 100):0000}";
+            quote.QuoteNumber = $"QUO-{(count + 142):0000}";
         }
 
         var lineItems = string.IsNullOrEmpty(form.LineItemsJson)
@@ -433,7 +433,7 @@ public class QuotesController : Controller
         if (!form.IsDraft && quote.Status == QuoteStatus.Draft)
         {
             int count = await _context.Quotes.CountAsync(q => q.Status != QuoteStatus.Draft && q.Id != id);
-            quote.QuoteNumber ??= $"QUO-{(count + 100):0000}";
+            quote.QuoteNumber ??= $"QUO-{(count + 142):0000}";
             quote.Status = QuoteStatus.Pending;
         }
 
@@ -554,7 +554,7 @@ public class QuotesController : Controller
         int count = await _context.Invoices.CountAsync();
         var invoice = new Invoice
         {
-            InvoiceNumber = $"INV-{(count + 100):0000}",
+            InvoiceNumber = $"INV-{(count + 131):0000}",
             ClientId = quote.ClientId,
             QuoteId = quote.Id,
             Subtotal = quote.Subtotal,

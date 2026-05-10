@@ -24,6 +24,10 @@ public class HomeController : Controller
         ViewBag.PendingQuotes    = await _context.Quotes.CountAsync(q => q.Status == QuoteStatus.Pending);
         ViewBag.OverdueInvoices  = await _context.Invoices.CountAsync(i => i.Status == InvoiceStatus.Overdue);
 
+        ViewBag.NetProfit = await _context.ProfitSummaries
+            .Where(p => p.Quote.Invoice != null && p.Quote.Invoice.Status == InvoiceStatus.Paid)
+            .SumAsync(p => (decimal?)p.NetProfit) ?? 0;
+
         ViewBag.TotalRevenue = await _context.Invoices
             .Where(i => i.Status == InvoiceStatus.Paid)
             .SumAsync(i => (decimal?)i.Total) ?? 0;

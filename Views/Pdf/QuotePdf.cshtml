@@ -247,7 +247,23 @@
                 <h5 style="color:black;margin-bottom:10px;font-weight:550;font-size:17px;margin-top:0;">Client Information</h5>
                 <div class="info-row"><span class="info-label">Name:</span><span>@Model.Client?.FullName</span></div>
                 <div class="info-row"><span class="info-label">Email:</span><span>@Model.Client?.Email</span></div>
-                <div class="info-row"><span class="info-label">Phone:</span><span>@Model.Client?.Phone</span></div>
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    <span>
+                        @if (string.IsNullOrEmpty(Model.Client?.Phone))
+                        {
+                            @("—")
+                        }
+                        else if (Model.Client.Phone.Length >= 9)
+                        {
+                            @($"{Model.Client.Phone.Substring(0, 3)} {Model.Client.Phone.Substring(3, 3)} {Model.Client.Phone.Substring(6)}")
+                        }
+                        else
+                        {
+                            @Model.Client.Phone
+                        }
+                    </span>
+                </div>
                 @if (!string.IsNullOrEmpty(Model.Client?.BusinessName))
                 {
                     <div class="info-row"><span class="info-label">Business:</span><span>@Model.Client.BusinessName</span></div>
