@@ -1,0 +1,244 @@
+@model KiefProductions.ViewModels.ClientReportViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; padding: 30px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #1a1a1a; }
+.logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+.logo-sub { font-size: 9px; color: #666; margin-top: 2px; }
+.report-title { text-align: right; }
+.report-title h1 { font-size: 16px; font-weight: 700; }
+.report-title p { font-size: 9px; color: #666; margin-top: 3px; }
+.client-block { background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 6px; padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; }
+.client-name { font-size: 14px; font-weight: 700; }
+.client-meta { font-size: 9px; color: #666; margin-top: 3px; }
+h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #333; margin: 20px 0 10px; border-bottom: 1px solid #e5e5e5; padding-bottom: 5px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.kpi-box { background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px; }
+.kpi-box.green { border-left: 3px solid #22c55e; }
+.kpi-box.red { border-left: 3px solid #ef4444; }
+.kpi-box.yellow { border-left: 3px solid #f59e0b; }
+.kpi-box.purple { border-left: 3px solid #a855f7; }
+.kpi-label { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.kpi-value { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.kpi-sub { font-size: 8px; color: #999; margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 4px; }
+th { background: #f1f1f1; text-align: left; padding: 6px 8px; font-weight: 600; border-bottom: 1px solid #ddd; }
+td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.section-box { background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px; }
+.stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 9px; }
+.stat-row:last-child { border-bottom: none; }
+.stat-row strong { font-weight: 600; }
+.payment-detail { font-size: 8px; color: #888; padding: 3px 8px 5px; background: #f8f9fa; border-bottom: 1px solid #f0f0f0; }
+.badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 600; }
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-yellow { background: #fef9c3; color: #854d0e; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-gray { background: #f3f4f6; color: #374151; }
+.footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #e5e5e5; display: flex; justify-content: space-between; font-size: 8px; color: #aaa; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="logo-text">KIEF PRODUCTIONS</div>
+        <div class="logo-sub">Event Production &amp; Management</div>
+    </div>
+    <div class="report-title">
+        <h1>Client Report</h1>
+        <p>Period: @Model.StartDate.ToString("d MMM yyyy") — @Model.EndDate.ToString("d MMM yyyy")</p>
+        <p>Generated: @DateTime.Now.ToString("d MMM yyyy, HH:mm")</p>
+    </div>
+</div>
+
+<div class="client-block">
+    <div>
+        <div class="client-name">@Model.Client?.FullName</div>
+        @if (Model.Client?.BusinessName != null) { <div class="client-meta">@Model.Client.BusinessName</div> }
+        @if (Model.Client?.Email != null) { <div class="client-meta">@Model.Client.Email</div> }
+        @if (Model.Client?.Phone != null) { <div class="client-meta">@Model.Client.Phone</div> }
+    </div>
+    <div style="text-align:right;">
+        @if (Model.RelationshipSince.HasValue)
+        {
+            <div class="client-meta">Client since @Model.RelationshipSince.Value.ToString("MMM yyyy")</div>
+        }
+        <div class="client-meta" style="margin-top:4px;">All-time events: <strong>@Model.TotalEventsAllTime</strong></div>
+        <div class="client-meta">Lifetime value: <strong>R @Model.LifetimeValue.ToString("N2")</strong></div>
+    </div>
+</div>
+
+<h2>Period Summary</h2>
+<div class="kpi-grid">
+    <div class="kpi-box">
+        <div class="kpi-label">Total Invoiced</div>
+        <div class="kpi-value">R @Model.TotalInvoicedInPeriod.ToString("N2")</div>
+        <div class="kpi-sub">in period</div>
+    </div>
+    <div class="kpi-box green">
+        <div class="kpi-label">Total Paid</div>
+        <div class="kpi-value">R @Model.TotalPaidInPeriod.ToString("N2")</div>
+        <div class="kpi-sub">collected</div>
+    </div>
+    <div class="kpi-box @(Model.TotalOutstandingInPeriod > 0 ? "yellow" : "")">
+        <div class="kpi-label">Outstanding</div>
+        <div class="kpi-value">R @Model.TotalOutstandingInPeriod.ToString("N2")</div>
+        <div class="kpi-sub">balance due</div>
+    </div>
+    <div class="kpi-box purple">
+        <div class="kpi-label">Discounts Given</div>
+        <div class="kpi-value">R @Model.TotalDiscountsGiven.ToString("N2")</div>
+        <div class="kpi-sub">@Model.DiscountPercentage% of gross</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-label">Events in Period</div>
+        <div class="kpi-value">@Model.TotalEventsInPeriod</div>
+        <div class="kpi-sub">avg R @Model.AverageSpendPerEvent.ToString("N2") / event</div>
+    </div>
+    <div class="kpi-box">
+        <div class="kpi-label">Avg Days to Pay</div>
+        <div class="kpi-value">@Model.AverageDaysToPayment days</div>
+        <div class="kpi-sub">@Model.InvoicesPaidOnTime on time, @Model.InvoicesPaidLate late</div>
+    </div>
+</div>
+
+<div class="two-col">
+    <div class="section-box">
+        <div style="font-size:10px;font-weight:700;margin-bottom:8px;">Discount Breakdown</div>
+        <div class="stat-row"><span>Gross Value</span><strong>R @Model.TotalGrossValue.ToString("N2")</strong></div>
+        <div class="stat-row"><span>Discounts Given</span><strong>– R @Model.TotalDiscountsGiven.ToString("N2")</strong></div>
+        <div class="stat-row"><span>Net Invoiced</span><strong>R @Model.TotalInvoicedInPeriod.ToString("N2")</strong></div>
+        <div class="stat-row"><span>Discount Rate</span><strong>@Model.DiscountPercentage%</strong></div>
+    </div>
+    <div class="section-box">
+        <div style="font-size:10px;font-weight:700;margin-bottom:8px;">Payment Behaviour</div>
+        <div class="stat-row"><span>Avg Days to Payment</span><strong>@Model.AverageDaysToPayment days</strong></div>
+        <div class="stat-row"><span>Paid On Time</span><strong>@Model.InvoicesPaidOnTime invoices</strong></div>
+        <div class="stat-row"><span>Paid Late</span><strong>@Model.InvoicesPaidLate invoices</strong></div>
+        <div class="stat-row"><span>Avg Spend / Event</span><strong>R @Model.AverageSpendPerEvent.ToString("N2")</strong></div>
+    </div>
+</div>
+
+@if (Model.Invoices.Any())
+{
+    <h2>Invoices</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Issued</th>
+                <th>Due</th>
+                <th>Subtotal</th>
+                <th>Discount</th>
+                <th>Total</th>
+                <th>Paid</th>
+                <th>Balance</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var inv in Model.Invoices)
+            {
+                <tr>
+                    <td>@inv.InvoiceNumber</td>
+                    <td>@inv.DateIssued.ToString("d MMM yy")</td>
+                    <td>@inv.DueDate.ToString("d MMM yy")</td>
+                    <td>R @inv.Subtotal.ToString("N2")</td>
+                    <td>@(inv.Discount > 0 ? $"– R {inv.Discount:N2}" : "—")</td>
+                    <td><strong>R @inv.Total.ToString("N2")</strong></td>
+                    <td>R @inv.AmountPaid.ToString("N2")</td>
+                    <td>R @inv.BalanceDue.ToString("N2")</td>
+                    <td>
+                        <span class="badge @(inv.Status == "Paid" ? "badge-green" : inv.Status == "Overdue" ? "badge-red" : inv.Status is "Sent" or "PartiallyPaid" ? "badge-yellow" : "badge-gray")">
+                            @inv.Status
+                        </span>
+                    </td>
+                </tr>
+                @if (inv.Payments.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="payment-detail">
+                            Payments: @string.Join("  |  ", inv.Payments.Select(p => $"{p.PaymentDate:d MMM yy} — R {p.Amount:N2}{(p.Method != null ? $" ({p.Method})" : "")}"))
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@if (Model.Events.Any())
+{
+    <h2>Events</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Event</th>
+                <th>Date</th>
+                <th>Venue</th>
+                <th>Status</th>
+                <th>Revenue</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model.Events)
+            {
+                <tr>
+                    <td><strong>@e.EventName</strong></td>
+                    <td>@e.EventDate.ToString("d MMM yyyy")</td>
+                    <td>@(e.Venue ?? "—")</td>
+                    <td>@e.Status</td>
+                    <td>@(e.Revenue > 0 ? $"R {e.Revenue:N2}" : "—")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (Model.Quotes.Any())
+{
+    <h2>Quotes</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Quote #</th>
+                <th>Issued</th>
+                <th>Subtotal</th>
+                <th>Discount</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var q in Model.Quotes)
+            {
+                <tr>
+                    <td>@q.QuoteNumber</td>
+                    <td>@q.DateIssued.ToString("d MMM yyyy")</td>
+                    <td>R @q.Subtotal.ToString("N2")</td>
+                    <td>@(q.Discount > 0 ? $"– R {q.Discount:N2}" : "—")</td>
+                    <td><strong>R @q.Total.ToString("N2")</strong></td>
+                    <td>@q.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="footer">
+    <span>Kief Productions — Confidential — @Model.Client?.FullName</span>
+    <span>Generated @DateTime.Now.ToString("d MMM yyyy")</span>
+</div>
+
+</body>
+</html>

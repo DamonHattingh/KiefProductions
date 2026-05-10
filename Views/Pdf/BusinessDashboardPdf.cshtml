@@ -1,0 +1,183 @@
+@model KiefProductions.ViewModels.BusinessDashboardViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; padding: 30px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #1a1a1a; }
+.logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+.logo-sub { font-size: 9px; color: #666; margin-top: 2px; }
+.report-title { text-align: right; }
+.report-title h1 { font-size: 16px; font-weight: 700; }
+.report-title p { font-size: 9px; color: #666; margin-top: 3px; }
+h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #333; margin: 20px 0 10px; border-bottom: 1px solid #e5e5e5; padding-bottom: 5px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.kpi-box { background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px; }
+.kpi-box.green { border-left: 3px solid #22c55e; }
+.kpi-box.red { border-left: 3px solid #ef4444; }
+.kpi-box.yellow { border-left: 3px solid #f59e0b; }
+.kpi-box.blue { border-left: 3px solid #3b82f6; }
+.kpi-label { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.kpi-value { font-size: 14px; font-weight: 700; color: #1a1a1a; }
+.kpi-sub { font-size: 8px; color: #999; margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; font-size: 9px; }
+th { background: #f1f1f1; text-align: left; padding: 6px 8px; font-weight: 600; border-bottom: 1px solid #ddd; }
+td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; }
+tr:last-child td { border-bottom: none; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.section-box { background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 6px; padding: 14px; }
+.stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 9px; }
+.stat-row:last-child { border-bottom: none; }
+.stat-row strong { font-weight: 600; }
+.badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 8px; font-weight: 600; }
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+.badge-yellow { background: #fef9c3; color: #854d0e; }
+.badge-blue { background: #dbeafe; color: #1e40af; }
+.badge-gray { background: #f3f4f6; color: #374151; }
+.overdue-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.overdue-box { background: #fff8f0; border: 1px solid #fed7aa; border-radius: 5px; padding: 10px; }
+.footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #e5e5e5; display: flex; justify-content: space-between; font-size: 8px; color: #aaa; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="logo-text">KIEF PRODUCTIONS</div>
+        <div class="logo-sub">Event Production &amp; Management</div>
+    </div>
+    <div class="report-title">
+        <h1>Business Dashboard Report</h1>
+        <p>Period: @Model.StartDate.ToString("d MMM yyyy") — @Model.EndDate.ToString("d MMM yyyy")</p>
+        <p>Generated: @DateTime.Now.ToString("d MMM yyyy, HH:mm")</p>
+    </div>
+</div>
+
+<h2>Financial Summary</h2>
+<div class="kpi-grid">
+    <div class="kpi-box green">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value">R @Model.TotalRevenue.ToString("N2")</div>
+        <div class="kpi-sub">from paid invoices</div>
+    </div>
+    <div class="kpi-box @(Model.NetProfit >= 0 ? "green" : "red")">
+        <div class="kpi-label">Net Profit</div>
+        <div class="kpi-value">R @Model.NetProfit.ToString("N2")</div>
+        <div class="kpi-sub">@Model.ProfitMarginPercent% margin</div>
+    </div>
+    <div class="kpi-box yellow">
+        <div class="kpi-label">Outstanding</div>
+        <div class="kpi-value">R @Model.TotalOutstanding.ToString("N2")</div>
+        <div class="kpi-sub">yet to collect</div>
+    </div>
+    <div class="kpi-box red">
+        <div class="kpi-label">Overdue</div>
+        <div class="kpi-value">R @Model.TotalOverdue.ToString("N2")</div>
+        <div class="kpi-sub">past due date</div>
+    </div>
+    <div class="kpi-box blue">
+        <div class="kpi-label">Avg Invoice Value</div>
+        <div class="kpi-value">R @Model.AverageInvoiceValue.ToString("N2")</div>
+        <div class="kpi-sub">paid invoices only</div>
+    </div>
+    <div class="kpi-box blue">
+        <div class="kpi-label">Largest Invoice</div>
+        <div class="kpi-value">R @Model.LargestInvoiceValue.ToString("N2")</div>
+        <div class="kpi-sub">in period</div>
+    </div>
+</div>
+
+<div class="two-col">
+    <div>
+        <h2>Invoice Breakdown</h2>
+        <div class="section-box">
+            <div class="stat-row"><span>Total Invoices</span><strong>@Model.TotalInvoices</strong></div>
+            <div class="stat-row"><span>Paid</span><strong>@Model.InvoicesPaid</strong></div>
+            <div class="stat-row"><span>Sent (awaiting)</span><strong>@Model.InvoicesSent</strong></div>
+            <div class="stat-row"><span>Partially Paid</span><strong>@Model.InvoicesPartiallyPaid</strong></div>
+            <div class="stat-row"><span>Overdue</span><strong>@Model.InvoicesOverdue</strong></div>
+            <div class="stat-row"><span>Draft</span><strong>@Model.InvoicesDraft</strong></div>
+        </div>
+    </div>
+    <div>
+        <h2>Quote Performance</h2>
+        <div class="section-box">
+            <div class="stat-row"><span>Total Quotes</span><strong>@Model.TotalQuotes</strong></div>
+            <div class="stat-row"><span>Total Quoted Value</span><strong>R @Model.TotalQuotedValue.ToString("N2")</strong></div>
+            <div class="stat-row"><span>Conversion Rate</span><strong>@Model.QuoteConversionRate%</strong></div>
+            <div class="stat-row"><span>Avg Quote Value</span><strong>R @Model.AverageQuoteValue.ToString("N2")</strong></div>
+            <div class="stat-row"><span>Pending</span><strong>@Model.QuotesPending</strong></div>
+            <div class="stat-row"><span>Rejected</span><strong>@Model.QuotesRejected</strong></div>
+        </div>
+    </div>
+</div>
+
+<h2>Business Health</h2>
+<div class="section-box" style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+    <div class="stat-row" style="flex-direction:column;align-items:flex-start;padding-right:16px;">
+        <span>Events in Period</span><strong style="font-size:13px;margin-top:2px;">@Model.TotalEvents</strong>
+    </div>
+    <div class="stat-row" style="flex-direction:column;align-items:flex-start;padding-right:16px;">
+        <span>Clients Served</span><strong style="font-size:13px;margin-top:2px;">@Model.TotalClientsServed</strong>
+    </div>
+    <div class="stat-row" style="flex-direction:column;align-items:flex-start;">
+        <span>Repeat Client Rate</span><strong style="font-size:13px;margin-top:2px;">@Model.RepeatClientRate%</strong>
+    </div>
+</div>
+
+@if (Model.TotalOverdue > 0)
+{
+    <h2>Overdue Aging</h2>
+    <div class="overdue-grid">
+        <div class="overdue-box">
+            <div class="kpi-label">0 – 30 days</div>
+            <div class="kpi-value" style="color:#f59e0b;">R @Model.Overdue30Days.ToString("N2")</div>
+        </div>
+        <div class="overdue-box">
+            <div class="kpi-label">31 – 60 days</div>
+            <div class="kpi-value" style="color:#f97316;">R @Model.Overdue60Days.ToString("N2")</div>
+        </div>
+        <div class="overdue-box">
+            <div class="kpi-label">60+ days</div>
+            <div class="kpi-value" style="color:#ef4444;">R @Model.Overdue90PlusDays.ToString("N2")</div>
+        </div>
+    </div>
+}
+
+@if (Model.MonthlyRevenue.Any())
+{
+    <h2>Monthly Revenue</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Revenue (Paid)</th>
+                <th>Est. Profit</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.MonthlyRevenue)
+            {
+                <tr>
+                    <td>@m.Month</td>
+                    <td>R @m.Revenue.ToString("N2")</td>
+                    <td>R @m.Profit.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="footer">
+    <span>Kief Productions — Confidential</span>
+    <span>Generated @DateTime.Now.ToString("d MMM yyyy")</span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+@model KiefProductions.ViewModels.PeriodSnapshotViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10px; color: #1a1a1a; background: #fff; padding: 30px; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #1a1a1a; }
+.logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+.logo-sub { font-size: 9px; color: #666; margin-top: 2px; }
+.report-title { text-align: right; }
+.report-title h1 { font-size: 16px; font-weight: 700; }
+.report-title p { font-size: 9px; color: #666; margin-top: 3px; }
+h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #333; margin: 20px 0 10px; border-bottom: 1px solid #e5e5e5; padding-bottom: 5px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.kpi-box { background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px; }
+.kpi-box.green { border-left: 3px solid #22c55e; }
+.kpi-box.red { border-left: 3px solid #ef4444; }
+.kpi-box.yellow { border-left: 3px solid #f59e0b; }
+.kpi-box.blue { border-left: 3px solid #3b82f6; }
+.kpi-label { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.kpi-value { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+.kpi-sub { font-size: 8px; color: #999; margin-top: 2px; }
+table { width: 100%; border-collapse: collapse; font-size: 9px; }
+th { background: #f1f1f1; text-align: left; padding: 6px 8px; font-weight: 600; border-bottom: 1px solid #ddd; }
+td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; }
+tr:last-child td { border-bottom: none; }
+tr.totals td { border-top: 2px solid #ccc; font-weight: 700; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.section-box { background: #f8f9fa; border: 1px solid #e5e5e5; border-radius: 6px; padding: 12px; }
+.stat-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 9px; }
+.stat-row:last-child { border-bottom: none; }
+.stat-row strong { font-weight: 600; }
+.overdue-box { background: #fff0f0; border: 1px solid #fca5a5; border-radius: 5px; padding: 10px; margin-bottom: 14px; font-size: 9px; }
+.footer { margin-top: 30px; padding-top: 10px; border-top: 1px solid #e5e5e5; display: flex; justify-content: space-between; font-size: 8px; color: #aaa; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <div class="logo-text">KIEF PRODUCTIONS</div>
+        <div class="logo-sub">Event Production &amp; Management</div>
+    </div>
+    <div class="report-title">
+        <h1>Period Snapshot</h1>
+        <p>Period: @Model.StartDate.ToString("d MMM yyyy") — @Model.EndDate.ToString("d MMM yyyy")</p>
+        <p>Generated: @DateTime.Now.ToString("d MMM yyyy, HH:mm")</p>
+    </div>
+</div>
+
+<h2>Profit &amp; Loss</h2>
+<div class="kpi-grid">
+    <div class="kpi-box green">
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-value">R @Model.TotalRevenue.ToString("N2")</div>
+        <div class="kpi-sub">paid invoices</div>
+    </div>
+    <div class="kpi-box red">
+        <div class="kpi-label">Total Costs</div>
+        <div class="kpi-value">R @Model.TotalCosts.ToString("N2")</div>
+        <div class="kpi-sub">gear + expenses</div>
+    </div>
+    <div class="kpi-box @(Model.NetProfit >= 0 ? "green" : "red")">
+        <div class="kpi-label">Net Profit</div>
+        <div class="kpi-value">R @Model.NetProfit.ToString("N2")</div>
+        <div class="kpi-sub">@Model.ProfitMarginPercent% margin</div>
+    </div>
+    <div class="kpi-box blue">
+        <div class="kpi-label">Total Invoiced</div>
+        <div class="kpi-value">R @Model.TotalInvoiced.ToString("N2")</div>
+        <div class="kpi-sub">all invoices issued</div>
+    </div>
+    <div class="kpi-box green">
+        <div class="kpi-label">Total Collected</div>
+        <div class="kpi-value">R @Model.TotalCollected.ToString("N2")</div>
+        <div class="kpi-sub">payments received</div>
+    </div>
+    <div class="kpi-box @(Model.OutstandingReceivables > 0 ? "yellow" : "")">
+        <div class="kpi-label">Outstanding</div>
+        <div class="kpi-value">R @Model.OutstandingReceivables.ToString("N2")</div>
+        <div class="kpi-sub">@(Model.OverdueCount > 0 ? $"incl. {Model.OverdueCount} overdue" : "no overdue")</div>
+    </div>
+</div>
+
+@if (Model.OverdueCount > 0)
+{
+    <div class="overdue-box">
+        ⚠ <strong>@Model.OverdueCount overdue @(Model.OverdueCount == 1 ? "invoice" : "invoices")</strong> totalling <strong>R @Model.OverdueAmount.ToString("N2")</strong> — requires follow-up.
+    </div>
+}
+
+<div class="two-col">
+    <div class="section-box">
+        <div style="font-size:10px;font-weight:700;margin-bottom:8px;">Events</div>
+        <div class="stat-row"><span>Total Events</span><strong>@Model.TotalEvents</strong></div>
+        <div class="stat-row"><span>Completed</span><strong>@Model.CompletedEvents</strong></div>
+        <div class="stat-row"><span>Cancelled</span><strong>@Model.CancelledEvents</strong></div>
+        <div class="stat-row">
+            <span>Completion Rate</span>
+            <strong>@(Model.TotalEvents > 0 ? Math.Round((decimal)Model.CompletedEvents / Model.TotalEvents * 100, 1) : 0)%</strong>
+        </div>
+    </div>
+    <div class="section-box">
+        <div style="font-size:10px;font-weight:700;margin-bottom:8px;">Quotes</div>
+        <div class="stat-row"><span>Total Quotes</span><strong>@Model.TotalQuotes</strong></div>
+        <div class="stat-row"><span>Total Quoted Value</span><strong>R @Model.TotalQuotedValue.ToString("N2")</strong></div>
+        <div class="stat-row"><span>Converted</span><strong>@Model.ConvertedQuotes</strong></div>
+        <div class="stat-row"><span>Conversion Rate</span><strong>@Model.ConversionRate%</strong></div>
+    </div>
+</div>
+
+@if (Model.TopClients.Any())
+{
+    <h2>Top Clients by Revenue</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Client</th>
+                <th>Business</th>
+                <th>Invoices</th>
+                <th>Events</th>
+                <th>Revenue</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.TopClients.Count; i++)
+            {
+                var c = Model.TopClients[i];
+                <tr>
+                    <td>@(i + 1)</td>
+                    <td><strong>@c.Name</strong></td>
+                    <td>@(c.BusinessName ?? "—")</td>
+                    <td>@c.InvoiceCount</td>
+                    <td>@c.EventCount</td>
+                    <td><strong>R @c.Revenue.ToString("N2")</strong></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (Model.MonthlyBreakdown.Any())
+{
+    <h2>Month-by-Month Breakdown</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Revenue</th>
+                <th>Costs</th>
+                <th>Profit</th>
+                <th>Margin</th>
+                <th>Events</th>
+                <th>Invoices</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model.MonthlyBreakdown)
+            {
+                var margin = m.Revenue > 0 ? Math.Round(m.Profit / m.Revenue * 100, 1) : 0;
+                <tr>
+                    <td>@m.Month @m.Year</td>
+                    <td>R @m.Revenue.ToString("N2")</td>
+                    <td>R @m.Costs.ToString("N2")</td>
+                    <td>R @m.Profit.ToString("N2")</td>
+                    <td>@margin%</td>
+                    <td>@m.EventCount</td>
+                    <td>@m.InvoiceCount</td>
+                </tr>
+            }
+            <tr class="totals">
+                <td>TOTAL</td>
+                <td>R @Model.TotalRevenue.ToString("N2")</td>
+                <td>R @Model.TotalCosts.ToString("N2")</td>
+                <td>R @Model.NetProfit.ToString("N2")</td>
+                <td>@Model.ProfitMarginPercent%</td>
+                <td>@Model.TotalEvents</td>
+                <td>@Model.MonthlyBreakdown.Sum(x => x.InvoiceCount)</td>
+            </tr>
+        </tbody>
+    </table>
+}
+
+<div class="footer">
+    <span>Kief Productions — Confidential</span>
+    <span>Generated @DateTime.Now.ToString("d MMM yyyy")</span>
+</div>
+
+</body>
+</html>
