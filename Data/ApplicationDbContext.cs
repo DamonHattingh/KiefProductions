@@ -38,7 +38,7 @@ public class ApplicationDbContext : IdentityDbContext
         builder.Entity<Client>(e =>
         {
             e.Property(x => x.FullName).IsRequired().HasMaxLength(200);
-            e.Property(x => x.Email).IsRequired().HasMaxLength(200);
+            e.Property(x => x.Email).HasMaxLength(200);
             e.Property(x => x.Phone).HasMaxLength(50);
             e.Property(x => x.BusinessName).HasMaxLength(200);
         });
