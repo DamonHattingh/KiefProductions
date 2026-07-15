@@ -47,7 +47,7 @@ public class VendorDocumentExtractionService
         {
             using var document = PdfDocument.Open(filePath);
             var pages = document.GetPages().Take(2); // header info is almost always on page 1
-            text = string.Join("\n", pages.Select(p => p.Text));
+            text = string.Join("\n", pages.Select(ExtractReadingOrderText));
         }
         catch
         {
@@ -94,6 +94,28 @@ public class VendorDocumentExtractionService
             result.DocumentDate = date;
 
         return result;
+    }
+
+    /// <summary>
+    /// PdfPig's plain Page.Text follows raw content-stream order, which for PDFs that
+    /// place text glyph-by-glyph (common with logo/letterhead elements, and with some
+    /// PDF generators used by quoting/invoicing tools) comes out completely scrambled —
+    /// e.g. "Orange Productions" as "O r a n g eP r o d u c t i o n s". Rebuilding lines
+    /// from each word's bounding-box position (group by Y, order by X) gives text much
+    /// closer to what a human reads, similar to what "pdftotext -layout" produces.
+    /// </summary>
+    private static string ExtractReadingOrderText(UglyToad.PdfPig.Content.Page page)
+    {
+        var words = page.GetWords().ToList();
+        if (words.Count == 0)
+            return string.Empty;
+
+        var lines = words
+            .GroupBy(w => Math.Round(w.BoundingBox.Bottom / 3) * 3)
+            .OrderByDescending(g => g.Key)
+            .Select(g => string.Join(" ", g.OrderBy(w => w.BoundingBox.Left).Select(w => w.Text)));
+
+        return string.Join("\n", lines);
     }
 
     private static bool IsPdf(string filePath, string? contentType)
