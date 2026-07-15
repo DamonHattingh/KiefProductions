@@ -24,6 +24,7 @@ public class Event
 
     public ICollection<EventStaff> EventStaff { get; set; } = new List<EventStaff>();
     public ICollection<GearBooking> GearBookings { get; set; } = new List<GearBooking>();
+    public ICollection<VendorDocument> VendorDocuments { get; set; } = new List<VendorDocument>();
 }
 
 public enum EventStatus

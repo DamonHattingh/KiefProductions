@@ -29,6 +29,7 @@ public class ApplicationDbContext : IdentityDbContext
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceLineItem> InvoiceLineItems { get; set; }
     public DbSet<Payment> Payments { get; set; }
+    public DbSet<VendorDocument> VendorDocuments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -281,6 +282,22 @@ public class ApplicationDbContext : IdentityDbContext
              .WithMany(x => x.Payments)
              .HasForeignKey(x => x.InvoiceId)
              .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // VendorDocument
+        builder.Entity<VendorDocument>(e =>
+        {
+            e.Property(x => x.VendorName).IsRequired().HasMaxLength(200);
+            e.Property(x => x.DocumentNumber).HasMaxLength(50);
+            e.Property(x => x.FileName).IsRequired().HasMaxLength(300);
+            e.Property(x => x.OriginalFileName).IsRequired().HasMaxLength(300);
+            e.Property(x => x.ContentType).HasMaxLength(100);
+            e.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+
+            e.HasOne(x => x.Event)
+             .WithMany(x => x.VendorDocuments)
+             .HasForeignKey(x => x.EventId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

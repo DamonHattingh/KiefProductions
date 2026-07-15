@@ -60,6 +60,11 @@
                     <span>Clients</span>
                 </a>
 
+                <a href="/VendorDocuments" class="nav-item">
+                    @NavIcon("paperclip")
+                    <span>Vendor Documents</span>
+                </a>
+
                 <a href="/Reports" class="nav-item">
                     @NavIcon("bar-chart")
                     <span>Reports</span>
@@ -195,6 +200,7 @@
             ["log-in"] = "<path d='M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4'/><polyline points='10 17 15 12 10 7'/><line x1='15' y1='12' x2='3' y2='12'/>",
             ["shield"] = "<path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/>",
             ["bar-chart"] = "<line x1='18' y1='20' x2='18' y2='10'/><line x1='12' y1='20' x2='12' y2='4'/><line x1='6' y1='20' x2='6' y2='14'/>",
+            ["paperclip"] = "<path d='M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48'/>",
         };
         var path = paths.GetValueOrDefault(name, "");
         return new HtmlString($"<svg class='nav-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>{path}</svg>");

@@ -1,0 +1,125 @@
+@model IEnumerable<KiefProductions.Models.VendorDocument>
+@{
+    ViewData["Title"] = "Vendor Documents";
+    var events = ViewBag.Events as List<KiefProductions.Models.Event> ?? new();
+}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>Vendor Documents</h1>
+        <p>@Model.Count() document@(Model.Count() == 1 ? "" : "s") — invoices &amp; quotes from freelancers and suppliers</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/VendorDocuments/Create" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+            Upload Document
+        </a>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-body">
+        <form method="get" class="form-row" style="align-items:end;">
+            <div class="form-group">
+                <label class="form-label">Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Vendor or document number..." value="@ViewBag.Search" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Type</label>
+                <select name="type" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var t in Enum.GetValues<KiefProductions.Models.VendorDocumentType>())
+                    {
+                        <option value="@t" selected="@(ViewBag.Type != null && ViewBag.Type.Equals(t))">@t</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Event</label>
+                <select name="eventId" class="form-select">
+                    <option value="">All</option>
+                    @foreach (var ev in events)
+                    {
+                        <option value="@ev.Id" selected="@(ViewBag.EventId != null && (int)ViewBag.EventId == ev.Id)">@ev.EventName</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group" style="flex:0;">
+                <button type="submit" class="btn btn-secondary">Filter</button>
+                <a href="/VendorDocuments" class="btn btn-ghost">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card">
+        <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+            <h3>No vendor documents yet</h3>
+            <p>Upload an invoice or quote from a freelancer or supplier to get started</p>
+            <a href="/VendorDocuments/Create" class="btn btn-primary">Upload Document</a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Vendor</th>
+                    <th>Type</th>
+                    <th>Doc #</th>
+                    <th>Event</th>
+                    <th>Doc Date</th>
+                    <th>Amount</th>
+                    <th>Uploaded</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var doc in Model)
+                {
+                    <tr>
+                        <td>
+                            <a href="/VendorDocuments/Details/@doc.Id" style="color:var(--text-primary);text-decoration:none;font-weight:500;">
+                                @doc.VendorName
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge @(doc.DocumentType == KiefProductions.Models.VendorDocumentType.Invoice ? "badge-converted" : "badge-quoted")">
+                                @doc.DocumentType
+                            </span>
+                        </td>
+                        <td class="muted">@(doc.DocumentNumber ?? "—")</td>
+                        <td class="muted">
+                            @if (doc.Event != null)
+                            {
+                                <a href="/Events/Details/@doc.Event.Id">@doc.Event.EventName</a>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
+                        <td class="muted">@(doc.DocumentDate?.ToString("dd MMM yyyy") ?? "—")</td>
+                        <td class="muted">@(doc.Amount.HasValue ? doc.Amount.Value.ToString("C2") : "—")</td>
+                        <td class="muted">@doc.UploadedDate.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <div class="table-actions">
+                                <a href="/VendorDocuments/Details/@doc.Id" class="btn btn-ghost btn-sm" data-tooltip="View">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                                </a>
+                                <a href="/VendorDocuments/Edit/@doc.Id" class="btn btn-ghost btn-sm" data-tooltip="Edit">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

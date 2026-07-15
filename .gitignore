@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Vendor document uploads (keep folder, ignore actual uploaded files)
+wwwroot/uploads/vendor-docs/*
+!wwwroot/uploads/vendor-docs/.gitkeep

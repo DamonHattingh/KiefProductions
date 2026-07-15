@@ -1,0 +1,91 @@
+@model KiefProductions.Models.VendorDocument
+@{
+    ViewData["Title"] = "Vendor Document";
+    var isPdf = (Model.ContentType == "application/pdf") || Model.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+    var fileUrl = "/uploads/vendor-docs/" + Model.FileName;
+}
+
+<div class="breadcrumb">
+    <a href="/VendorDocuments">Vendor Documents</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg>
+    <span class="current">@Model.VendorName</span>
+</div>
+
+<div class="page-header">
+    <div class="page-header-left">
+        <h1>@Model.VendorName</h1>
+        <p>
+            <span class="badge @(Model.DocumentType == KiefProductions.Models.VendorDocumentType.Invoice ? "badge-converted" : "badge-quoted")">@Model.DocumentType</span>
+            @if (!string.IsNullOrEmpty(Model.DocumentNumber))
+            {
+                <span class="muted">&nbsp;#@Model.DocumentNumber</span>
+            }
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/VendorDocuments/Edit/@Model.Id" class="btn btn-secondary">Edit</a>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this document? This cannot be undone.');" style="display:inline;">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
+
+<div class="grid" style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;align-items:start;">
+    <div class="card">
+        <div class="card-header"><h2>Details</h2></div>
+        <div class="card-body">
+            <div class="form-group">
+                <label class="form-label">Document Date</label>
+                <p>@(Model.DocumentDate?.ToString("dd MMM yyyy") ?? "—")</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Amount</label>
+                <p>@(Model.Amount.HasValue ? Model.Amount.Value.ToString("C2") : "—")</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Event</label>
+                <p>
+                    @if (Model.Event != null)
+                    {
+                        <a href="/Events/Details/@Model.Event.Id">@Model.Event.EventName</a>
+                    }
+                    else
+                    {
+                        <span class="muted">Not linked to an event</span>
+                    }
+                </p>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.Notes))
+            {
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <p>@Model.Notes</p>
+                </div>
+            }
+            <div class="form-group">
+                <label class="form-label">Uploaded</label>
+                <p>@Model.UploadedDate.ToString("dd MMM yyyy HH:mm")</p>
+            </div>
+            <div class="form-group">
+                <a href="@fileUrl" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
+                    Open original file — @Model.OriginalFileName
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h2>Preview</h2></div>
+        <div class="card-body" style="padding:0;">
+            @if (isPdf)
+            {
+                <iframe src="@fileUrl" style="width:100%;height:600px;border:none;"></iframe>
+            }
+            else
+            {
+                <img src="@fileUrl" alt="@Model.OriginalFileName" style="width:100%;height:auto;display:block;" />
+            }
+        </div>
+    </div>
+</div>
