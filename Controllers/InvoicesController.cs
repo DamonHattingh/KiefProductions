@@ -21,8 +21,11 @@ public class InvoicesController : Controller
         _viewRenderer = viewRenderer;
     }
 
-    public async Task<IActionResult> Index(string? search, string? status)
+    public async Task<IActionResult> Index(string? search, string? status, int page = 1)
     {
+
+        const int pageSize = 10;
+
         var query = _context.Invoices
             .Include(i => i.Client)
             .AsQueryable();
@@ -33,6 +36,16 @@ public class InvoicesController : Controller
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<InvoiceStatus>(status, out var statusEnum))
             query = query.Where(i => i.Status == statusEnum);
 
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, Math.Max(totalPages, 1)));
+
+        var invoices = await query
+        .OrderByDescending(c => c.DueDate)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
         var now = DateTime.Now;
         var overdueInvoices = await _context.Invoices
             .Where(i => i.DueDate < now && i.Status != InvoiceStatus.Paid && i.Status != InvoiceStatus.Overdue)
@@ -41,9 +54,14 @@ public class InvoicesController : Controller
         if (overdueInvoices.Any()) await _context.SaveChangesAsync();
 
         ViewBag.Search = search;
-        ViewBag.Status = status;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
 
-        return View(await query.OrderByDescending(i => i.DateIssued).ToListAsync());
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_InvoiceTable", invoices);
+
+        return View(invoices);
     }
 
     public async Task<IActionResult> Details(int id)

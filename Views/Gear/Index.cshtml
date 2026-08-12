@@ -77,5 +77,34 @@ else
                 }
             </tbody>
         </table>
+
+        @if (ViewBag.TotalPages > 1)
+        {
+            <div class="pages-div">
+                @{
+                    int currentPage = ViewBag.CurrentPage;
+                    int totalPages = ViewBag.TotalPages;
+                }
+
+                <a class="btn btn-ghost btn-sm @(currentPage == 1 ? "disabled" : "")"
+                   href="@Url.Action("Index", new { search = ViewBag.Search, page = currentPage - 1 })">
+                    Previous
+                </a>
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <a class="btn btn-sm @(i == currentPage ? "btn-primary" : "btn-ghost")"
+                       href="@Url.Action("Index", new { search = ViewBag.Search, page = i })">
+                        @i
+                    </a>
+                }
+
+                <a class="btn btn-ghost btn-sm @(currentPage == totalPages ? "disabled" : "")"
+                   href="@Url.Action("Index", new { search = ViewBag.Search, page = currentPage + 1 })">
+                    Next
+                </a>
+            </div>
+        }
+
     </div>
 }

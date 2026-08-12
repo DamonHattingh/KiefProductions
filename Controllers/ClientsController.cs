@@ -16,8 +16,10 @@ public class ClientsController : Controller
         _context = context;
     }
 
-    public async Task<IActionResult> Index(string? search)
+    public async Task<IActionResult> Index(string? search, int page = 1)
     {
+        const int pageSize = 10;
+
         var query = _context.Clients.AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
@@ -25,8 +27,25 @@ public class ClientsController : Controller
                                      c.Email.Contains(search) ||
                                      (c.BusinessName != null && c.BusinessName.Contains(search)));
 
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, Math.Max(totalPages, 1)));
+
+        var clients = await query
+        .OrderBy(c => c.FullName)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
         ViewBag.Search = search;
-        return View(await query.OrderBy(c => c.FullName).ToListAsync());
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            return PartialView("_ClientsTable", clients);
+
+        return View(clients);
     }
 
     public async Task<IActionResult> Details(int id)

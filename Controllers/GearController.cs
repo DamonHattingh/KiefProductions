@@ -13,8 +13,10 @@ public class GearController : Controller
     private readonly ApplicationDbContext _context;
     public GearController(ApplicationDbContext context) => _context = context;
 
-    public async Task<IActionResult> Index(string? search, int? categoryId)
+    public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1)
     {
+        const int pageSize = 10;
+
         var query = _context.Gears
             .Include(g => g.ProductType).ThenInclude(pt => pt.Category)
             .AsQueryable();
@@ -25,11 +27,24 @@ public class GearController : Controller
         if (categoryId.HasValue)
             query = query.Where(g => g.ProductType.CategoryId == categoryId);
 
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, Math.Max(totalPages, 1)));
+
+        var gear = await query
+        .OrderBy(c => c.ProductType.Category.Name)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
         ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
         ViewBag.CategoryId = categoryId;
         ViewBag.Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
 
-        return View(await query.OrderBy(g => g.ProductType.Category.Name).ThenBy(g => g.Name).ToListAsync());
+        return View(gear);
     }
 
     public async Task<IActionResult> Create()

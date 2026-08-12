@@ -12,8 +12,10 @@ public class EventsController : Controller
     private readonly ApplicationDbContext _context;
     public EventsController(ApplicationDbContext context) => _context = context;
 
-    public async Task<IActionResult> Index(string? search, string? status)
+    public async Task<IActionResult> Index(string? search, string? status, int page = 1)
     {
+        const int pageSize = 10;
+
         var query = _context.Events
             .Include(e => e.Quote).ThenInclude(q => q.Client)
             .AsQueryable();
@@ -24,10 +26,22 @@ public class EventsController : Controller
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<EventStatus>(status, out var statusEnum))
             query = query.Where(e => e.Status == statusEnum);
 
-        ViewBag.Search = search;
-        ViewBag.Status = status;
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, Math.Max(totalPages, 1)));
 
-        return View(await query.OrderByDescending(e => e.EventDate).ToListAsync());
+        var events = await query
+        .OrderBy(c => c.EventDate)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
+
+        return View(events);
     }
 
     public async Task<IActionResult> Details(int id)

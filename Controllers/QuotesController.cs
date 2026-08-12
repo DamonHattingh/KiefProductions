@@ -22,8 +22,10 @@ public class QuotesController : Controller
         _viewRenderer = viewRenderer;
     }
 
-    public async Task<IActionResult> Index(string? search, string? status)
+    public async Task<IActionResult> Index(string? search, string? status, int page = 1)
     {
+        const int pageSize = 10;
+
         var query = _context.Quotes
             .Include(q => q.Client)
             .Include(q => q.Event)
@@ -35,10 +37,22 @@ public class QuotesController : Controller
         if (!string.IsNullOrEmpty(status) && Enum.TryParse<QuoteStatus>(status, out var statusEnum))
             query = query.Where(q => q.Status == statusEnum);
 
-        ViewBag.Search = search;
-        ViewBag.Status = status;
+        var totalCount = await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+        page = Math.Max(1, Math.Min(page, Math.Max(totalPages, 1)));
 
-        return View(await query.OrderByDescending(q => q.DateIssued).ToListAsync());
+        var quotes = await query
+        .OrderByDescending(c => c.DateIssued)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+
+        ViewBag.Search = search;
+        ViewBag.CurrentPage = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalCount = totalCount;
+
+        return View(quotes);
     }
 
     public async Task<IActionResult> Details(int id)
