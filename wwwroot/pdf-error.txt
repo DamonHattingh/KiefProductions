@@ -1,0 +1,8 @@
+System.IO.IOException: The process cannot access the file 'C:\Users\damon\Documents\Private Repos\wwwroot\chromium\chrome-headless-shell-win64.zip' because it is being used by another process.
+   at System.IO.FileSystem.DeleteFile(String fullPath)
+   at System.IO.FileInfo.Delete()
+   at PuppeteerSharp.BrowserFetcher.DownloadAsync(SupportedBrowser browser, String buildId) in /home/runner/work/puppeteer-sharp/puppeteer-sharp/lib/PuppeteerSharp/BrowserFetcher.cs:line 272
+   at PuppeteerSharp.BrowserFetcher.DownloadAsync(String buildId) in /home/runner/work/puppeteer-sharp/puppeteer-sharp/lib/PuppeteerSharp/BrowserFetcher.cs:line 135
+   at PuppeteerSharp.BrowserFetcher.DownloadAsync() in /home/runner/work/puppeteer-sharp/puppeteer-sharp/lib/PuppeteerSharp/BrowserFetcher.cs:line 110
+   at KiefProductions.Services.PuppeteerPdfService.EnsureBrowserAsync() in C:\Users\damon\Documents\Private Repos\Services\PuppeteerPdfService.cs:line 35
+   at KiefProductions.Services.PuppeteerPdfService.GeneratePdfFromHtmlAsync(String html) in C:\Users\damon\Documents\Private Repos\Services\PuppeteerPdfService.cs:line 49
