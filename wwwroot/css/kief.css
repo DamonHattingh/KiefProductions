@@ -1653,3 +1653,31 @@ textarea.form-control {
     align-items: center;
     justify-content: center;
 }
+/* ── Rich text (Quill output) ────────────────────────────────── */
+/* The global reset at the top of this file zeroes margin and padding on
+   every element, which strips the indentation lists depend on. Rich text
+   saved from the quote editor needs those defaults restored, scoped so
+   the reset still applies everywhere else. */
+.rich-text ul,
+.rich-text ol {
+    padding-left: 22px;
+    margin: 4px 0;
+}
+
+.rich-text ul { list-style: disc outside; }
+.rich-text ol { list-style: decimal outside; }
+
+/* Vary the marker by depth so nesting reads clearly. */
+.rich-text ul ul { list-style: circle outside; }
+.rich-text ul ul ul { list-style: square outside; }
+
+.rich-text li {
+    margin: 2px 0;
+}
+
+.rich-text p {
+    margin: 4px 0;
+}
+
+.rich-text p:first-child { margin-top: 0; }
+.rich-text p:last-child { margin-bottom: 0; }
