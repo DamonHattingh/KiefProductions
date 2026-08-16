@@ -100,11 +100,11 @@
                                        style="max-width:320px;font-weight:600;"
                                        placeholder="Section name (e.g. Sound, Lighting, Labour)" />
                                 <button type="button" class="btn btn-secondary btn-sm btn-icon" title="Move up"
-                                        :disabled="idx === 0" @@click="moveSection(idx, -1)">
+                                        x-show="idx > 0" @@click="moveSection(idx, -1)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15" /></svg>
                                 </button>
                                 <button type="button" class="btn btn-secondary btn-sm btn-icon" title="Move down"
-                                        :disabled="idx === sections.length - 1" @@click="moveSection(idx, 1)">
+                                        x-show="idx < sections.length - 1" @@click="moveSection(idx, 1)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9" /></svg>
                                 </button>
                                 <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeSection(idx)">
