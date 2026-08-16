@@ -1681,3 +1681,71 @@ textarea.form-control {
 
 .rich-text p:first-child { margin-top: 0; }
 .rich-text p:last-child { margin-bottom: 0; }
+
+/* ── Gradient stat cards (dashboard) ─────────────────────────── */
+/* Iconless variant: the card carries its identity in a gradient wash
+   instead of a coloured glyph. Gradients are defined explicitly rather
+   than derived from --accent-color, because --orange resolves to white
+   in this theme and would wash out to grey. */
+.stat-card.stat-gradient {
+    padding: 22px;
+    gap: 8px;
+    justify-content: flex-end;
+    min-height: 118px;
+}
+
+    /* The gradient supersedes the 2px accent rule along the top edge. */
+    .stat-card.stat-gradient::after {
+        display: none;
+    }
+
+    .stat-card.stat-gradient .stat-value {
+        font-size: 29px;
+        letter-spacing: -0.01em;
+    }
+
+    .stat-card.stat-gradient .stat-label {
+        color: var(--text-secondary);
+        opacity: 0.85;
+    }
+
+/* Emerald → teal */
+.stat-card.stat-revenue {
+    border-color: rgba(34, 197, 94, 0.26);
+    background:
+        radial-gradient(135% 150% at 0% 0%, rgba(34, 197, 94, 0.26) 0%, rgba(34, 197, 94, 0) 62%),
+        linear-gradient(135deg, rgba(16, 185, 129, 0.20) 0%, rgba(20, 184, 166, 0.09) 55%, rgba(0, 0, 0, 0) 100%),
+        var(--bg-surface);
+}
+
+/* Indigo → violet */
+.stat-card.stat-profit {
+    border-color: rgba(129, 140, 248, 0.26);
+    background:
+        radial-gradient(135% 150% at 0% 0%, rgba(99, 102, 241, 0.30) 0%, rgba(99, 102, 241, 0) 62%),
+        linear-gradient(135deg, rgba(139, 92, 246, 0.20) 0%, rgba(56, 189, 248, 0.09) 55%, rgba(0, 0, 0, 0) 100%),
+        var(--bg-surface);
+}
+
+/* Amber */
+.stat-card.stat-outstanding {
+    border-color: rgba(245, 158, 11, 0.26);
+    background:
+        radial-gradient(135% 150% at 0% 0%, rgba(245, 158, 11, 0.26) 0%, rgba(245, 158, 11, 0) 62%),
+        linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(249, 115, 22, 0.09) 55%, rgba(0, 0, 0, 0) 100%),
+        var(--bg-surface);
+}
+
+/* Red — same slot as amber, used when invoices are overdue */
+.stat-card.stat-overdue {
+    border-color: rgba(239, 68, 68, 0.30);
+    background:
+        radial-gradient(135% 150% at 0% 0%, rgba(239, 68, 68, 0.28) 0%, rgba(239, 68, 68, 0) 62%),
+        linear-gradient(135deg, rgba(244, 63, 94, 0.20) 0%, rgba(217, 70, 239, 0.09) 55%, rgba(0, 0, 0, 0) 100%),
+        var(--bg-surface);
+}
+
+.stat-card.stat-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
