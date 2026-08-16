@@ -90,6 +90,14 @@
                                        class="form-control"
                                        style="max-width:320px;font-weight:600;"
                                        placeholder="Section name (e.g. Sound, Lighting, Labour)" />
+                                <button type="button" class="btn btn-secondary btn-sm btn-icon" title="Move up"
+                                        :disabled="idx === 0" @@click="moveSection(idx, -1)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm btn-icon" title="Move down"
+                                        :disabled="idx === sections.length - 1" @@click="moveSection(idx, 1)">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                </button>
                                 <button type="button" class="btn btn-danger btn-sm btn-icon" @@click="removeSection(idx)">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 </button>
@@ -257,6 +265,13 @@
                     delete this.quillInstances[sec.id];
                     this.sections.splice(idx, 1);
                     this.recalc();
+                },
+
+                moveSection(idx, dir) {
+                    const target = idx + dir;
+                    if (target < 0 || target >= this.sections.length) return;
+                    const [moved] = this.sections.splice(idx, 1);
+                    this.sections.splice(target, 0, moved);
                 },
 
                 recalc() {
