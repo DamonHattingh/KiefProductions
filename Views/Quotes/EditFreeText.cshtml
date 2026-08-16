@@ -163,6 +163,8 @@
                     </div>
                     <div x-show="showProfit" class="card-body" style="padding:0;">
                         <div class="finance-row"><span class="label">Revenue</span><span class="value" x-text="'R ' + (revenue || 0).toFixed(2)"></span></div>
+                        <div class="finance-row" x-show="discount > 0"><span class="label">Discount</span><span class="value" style="color:var(--red);" x-text="'-R ' + (parseFloat(discount) || 0).toFixed(2)"></span></div>
+                        <div class="finance-row" x-show="discount > 0"><span class="label">Net Revenue</span><span class="value" x-text="'R ' + (netRevenue || 0).toFixed(2)"></span></div>
                         <div class="finance-row"><span class="label">Costs</span><span class="value" style="color:var(--red);" x-text="'R ' + (totalCost || 0).toFixed(2)"></span></div>
                         <div class="finance-row profit-row">
                             <span class="label">Net Profit</span>
@@ -258,6 +260,7 @@
                 subtotal: parseFloat('@Model.Subtotal') || 0,
                 total: parseFloat('@Model.Total') || 0,
                 revenue: 0,
+                netRevenue: 0,
                 totalCost: 0,
                 netProfit: 0,
                 profitMargin: 0,
@@ -404,9 +407,10 @@
                     this.subtotal = sub;
                     this.total = Math.max(sub - (parseFloat(this.discount) || 0), 0);
                     this.revenue = sub;
+                    this.netRevenue = Math.max(sub - (parseFloat(this.discount) || 0), 0);
                     this.totalCost = costs;
-                    this.netProfit = sub - costs;
-                    this.profitMargin = sub > 0 ? (this.netProfit / sub * 100) : 0;
+                    this.netProfit = this.netRevenue - costs;
+                    this.profitMargin = this.netRevenue > 0 ? (this.netProfit / this.netRevenue * 100) : 0;
 
                     console.log('Recalc - Subtotal:', this.subtotal, 'Total:', this.total);
                 },

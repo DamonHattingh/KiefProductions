@@ -213,6 +213,8 @@
                     </div>
                     <div x-show="showProfit" class="card-body" style="padding:0;">
                         <div class="finance-row"><span class="label">Revenue</span><span class="value" x-text="'R ' + (revenue || 0).toFixed(2)"></span></div>
+                        <div class="finance-row" x-show="discount > 0"><span class="label">Discount</span><span class="value" style="color:var(--red);" x-text="'-R ' + (discount || 0).toFixed(2)"></span></div>
+                        <div class="finance-row" x-show="discount > 0"><span class="label">Net Revenue</span><span class="value" x-text="'R ' + (netRevenue || 0).toFixed(2)"></span></div>
                         <div class="finance-row"><span class="label">Costs</span><span class="value" style="color:var(--red);" x-text="'R ' + (totalCost || 0).toFixed(2)"></span></div>
                         <div class="finance-row"><span class="label">Expenses</span><span class="value" style="color:var(--red);" x-text="'R ' + (totalExpenses || 0).toFixed(2)"></span></div>
                         <div class="finance-row profit-row"><span class="label">Net Profit</span><span class="value" :class="netProfit >= 0 ? 'positive' : 'negative'" x-text="'R ' + (netProfit || 0).toFixed(2)"></span></div>
@@ -307,6 +309,7 @@
                 subtotal: 0,
                 total: 0,
                 revenue: 0,
+                netRevenue: 0,
                 totalCost: 0,
                 totalExpenses: 0,
                 netProfit: 0,
@@ -605,10 +608,11 @@
                     this.subtotal = sub;
                     this.total = Math.max(sub - (this.discount || 0), 0);
                     this.revenue = rev;
+                    this.netRevenue = Math.max(rev - (this.discount || 0), 0);
                     this.totalCost = costs;
                     this.totalExpenses = expenses;
-                    this.netProfit = rev - costs - expenses;
-                    this.profitMargin = rev > 0 ? (this.netProfit / rev * 100) : 0;
+                    this.netProfit = this.netRevenue - costs - expenses;
+                    this.profitMargin = this.netRevenue > 0 ? (this.netProfit / this.netRevenue * 100) : 0;
 
                     console.log('Recalc - Subtotal:', this.subtotal, 'Total:', this.total);
                 },

@@ -171,7 +171,7 @@ public class QuotesController : Controller
             });
         }
 
-        var revenue = sections.Sum(s => s.Qty * s.UnitPrice);
+        var revenue = Math.Max(sections.Sum(s => s.Qty * s.UnitPrice) - quote.Discount, 0m);
         var costs = sections.Sum(s => s.Cost);
         var net = revenue - costs;
 
@@ -281,7 +281,7 @@ public class QuotesController : Controller
         quote.Subtotal = sections.Sum(s => s.Qty * s.UnitPrice);
         quote.Total = quote.Subtotal - quote.Discount;
 
-        var revenue = sections.Sum(s => s.Qty * s.UnitPrice);
+        var revenue = Math.Max(sections.Sum(s => s.Qty * s.UnitPrice) - quote.Discount, 0m);
         var costs = sections.Sum(s => s.Cost);
         var net = revenue - costs;
 
@@ -388,7 +388,7 @@ public class QuotesController : Controller
             });
         }
 
-        var revenue = lineItems.Where(li => li.ItemType != "Expense").Sum(li => li.Quantity * li.UnitPrice);
+        var revenue = Math.Max(lineItems.Where(li => li.ItemType != "Expense").Sum(li => li.Quantity * li.UnitPrice) - quote.Discount, 0m);
         var costs = lineItems.Where(li => li.ItemType == "Rental" || li.ItemType == "Custom").Sum(li => li.Quantity * (li.CostPrice ?? 0));
         var expenses = lineItems.Where(li => li.ItemType == "Expense").Sum(li => li.Quantity * li.UnitPrice);
         var net = revenue - costs - expenses;
@@ -513,7 +513,7 @@ public class QuotesController : Controller
         quote.Subtotal = lineItems.Where(li => li.ItemType != "Expense").Sum(li => li.Quantity * li.UnitPrice);
         quote.Total = quote.Subtotal - quote.Discount;
 
-        var revenue = lineItems.Where(li => li.ItemType != "Expense").Sum(li => li.Quantity * li.UnitPrice);
+        var revenue = Math.Max(lineItems.Where(li => li.ItemType != "Expense").Sum(li => li.Quantity * li.UnitPrice) - quote.Discount, 0m);
         var costs = lineItems.Where(li => li.ItemType is "Rental" or "Custom").Sum(li => li.Quantity * (li.CostPrice ?? 0));
         var expenses = lineItems.Where(li => li.ItemType == "Expense").Sum(li => li.Quantity * li.UnitPrice);
         var net = revenue - costs - expenses;
