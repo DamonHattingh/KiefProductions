@@ -249,6 +249,7 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+    <script src="~/js/quill-lists.js"></script>
     <script>
         // Global flag to prevent double initialization
         let freeTextBuilderInitialized = false;
@@ -431,35 +432,6 @@
                 },
 
                         buildSections() {
-            function normalizeQuillLists(html) {
-                const temp = document.createElement('div');
-                temp.innerHTML = html;
-
-                temp.querySelectorAll('ol').forEach(ol => {
-                    let currentList = null;
-                    let currentType = null;
-
-                    Array.from(ol.children).forEach(li => {
-                        const type = li.getAttribute('data-list');
-                        const tag = type === 'bullet' ? 'ul' : 'ol';
-
-                        if (currentType !== tag) {
-                            currentList = document.createElement(tag);
-                            ol.parentNode.insertBefore(currentList, ol);
-                            currentType = tag;
-                        }
-
-                        const newLi = document.createElement('li');
-                        newLi.innerHTML = li.innerHTML;
-                        currentList.appendChild(newLi);
-                    });
-
-                    ol.remove();
-                });
-
-                return temp.innerHTML;
-            }
-
             return this.sections.map((s, idx) => ({
                 categoryName: s.categoryName || 'Section ' + (idx + 1),
                 descriptionHtml: normalizeQuillLists(s.descriptionHtml || ''),

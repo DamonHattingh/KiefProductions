@@ -203,6 +203,7 @@
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"></script>
+    <script src="~/js/quill-lists.js"></script>
     <script>
         function freeTextBuilder() {
             return {
@@ -290,31 +291,6 @@
                 },
 
                         buildSections() {
-
-            function normalizeQuillLists(html) {
-
-                const temp = document.createElement('div');
-                temp.innerHTML = html;
-
-                temp.querySelectorAll('li[data-list="bullet"]').forEach(li => {
-
-                    const ul = document.createElement('ul');
-
-                    if (li.parentNode.tagName === 'OL') {
-                        li.parentNode.parentNode.insertBefore(ul, li.parentNode);
-                    }
-
-                    ul.appendChild(li.cloneNode(true));
-
-                    li.parentNode.removeChild(li);
-                });
-
-                temp.querySelectorAll('li[data-list]').forEach(li => {
-                    li.removeAttribute('data-list');
-                });
-
-                return temp.innerHTML;
-            }
 
             return this.sections.map((s, idx) => ({
                 categoryName: s.categoryName || 'Section ' + (idx + 1),
